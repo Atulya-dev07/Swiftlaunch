@@ -1,0 +1,10 @@
+{
+  "id": "google-search",
+  "name": "Google Search",
+  "version": "1.0.0",
+  "description": "Search Google from SwiftLaunch",
+  "author": "SwiftLaunch Team",
+  "main": "index.js",
+  "actionKeywords": ["g:"],
+  "website": "https://google.com"
+}

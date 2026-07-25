@@ -1,0 +1,141 @@
+/**
+ * IPC handlers — wires real IPC channels connecting frontend to backend.
+ *
+ * Replaces placeholder ping/pong with real search, action execution,
+ * usage logging, and clipboard history channels.
+ */
+
+import { ipcMain, clipboard, shell, BrowserWindow } from 'electron';
+import { IPC_CHANNELS } from '@swiftlaunch/shared';
+import type { Result } from '@swiftlaunch/shared';
+import type { ProviderRegistry } from '../providers/ProviderRegistry.js';
+import type { ClipboardProvider } from '../providers/ClipboardProvider.js';
+import type { DbQueries } from '../db/queries.js';
+import type { PluginLoader } from '../plugin-host/PluginLoader.js';
+import type { WindowSnapper, SnapDirection } from '../window-manager/WindowSnapper.js';
+
+interface HandlerDependencies {
+  registry: ProviderRegistry;
+  clipboardProvider: ClipboardProvider;
+  dbQueries: DbQueries;
+  pluginLoader: PluginLoader;
+  windowSnapper: WindowSnapper;
+}
+
+export function registerIpcHandlers(deps: HandlerDependencies): void {
+  const { registry, clipboardProvider, dbQueries, pluginLoader, windowSnapper } = deps;
+
+  // Keep the ping channel for health checks
+  ipcMain.handle(IPC_CHANNELS.PING, () => 'pong');
+
+  // Hide window
+  ipcMain.on(IPC_CHANNELS.HIDE_WINDOW, (event) => {
+    const win = event.sender;
+    const browserWindow = BrowserWindow.fromWebContents(win);
+    browserWindow?.hide();
+  });
+
+  // ── Search ──────────────────────────────────────────────────────
+  ipcMain.handle(IPC_CHANNELS.SEARCH, async (_event, query: string): Promise<Result[]> => {
+    if (!query || query.trim().length === 0) return [];
+
+    // Fan out to providers
+    const providerResults = await registry.search(query);
+
+    // Fan out to plugins
+    let pluginResults: Result[] = [];
+    try {
+      pluginResults = await pluginLoader.search(query);
+    } catch (err) {
+      console.error('[IPC:SEARCH] Plugin search error:', err);
+    }
+
+    const allResults = [...providerResults, ...pluginResults];
+
+    // Apply usage frequency boost scores
+    const resultIds = allResults.map((r) => r.id);
+    const boosts = dbQueries.getBoostScores(resultIds);
+    for (const result of allResults) {
+      const boost = boosts.get(result.id);
+      if (boost) {
+        result.score = (result.score ?? 0) + Math.round(boost * 10);
+      }
+    }
+
+    // Re-sort with boosts applied
+    allResults.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
+    return allResults.slice(0, 30);
+  });
+
+  // ── Execute action ──────────────────────────────────────────────
+  ipcMain.handle(
+    IPC_CHANNELS.EXECUTE_ACTION,
+    async (_event, resultId: string, actionId?: string): Promise<void> => {
+      // Determine which provider owns the result
+      const providerId = resultId.split(':')[0];
+
+      if (providerId === 'calc') {
+        // Copy calculation result to clipboard
+        const value = resultId.replace('calc:', '');
+        clipboard.writeText(value);
+        return;
+      }
+
+      if (providerId === 'google') {
+        // Open Google search URL
+        const query = resultId.replace('google:', '');
+        const url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        await shell.openExternal(url);
+        return;
+      }
+
+      // Try each registered provider
+      for (const provider of registry.getAllProviders()) {
+        if (resultId.startsWith(provider.id.replace('Provider', '').toLowerCase() + ':')) {
+          await provider.executeAction?.(resultId, actionId);
+          return;
+        }
+      }
+
+      // Try generic open for file: results
+      if (providerId === 'file') {
+        const filePath = resultId.replace('file:', '');
+        await shell.openPath(filePath);
+        return;
+      }
+
+      // Clipboard paste
+      if (providerId === 'clip') {
+        await clipboardProvider.executeAction(resultId);
+        return;
+      }
+
+      // App launch
+      if (providerId === 'app') {
+        const lnkPath = resultId.replace('app:', '');
+        await shell.openPath(lnkPath);
+        return;
+      }
+
+      console.warn(`[IPC:EXECUTE_ACTION] No handler for result: ${resultId}`);
+    }
+  );
+
+  // ── Log usage ───────────────────────────────────────────────────
+  ipcMain.on(IPC_CHANNELS.LOG_USAGE, (_event, query: string, resultId: string) => {
+    dbQueries.logUsage(query, resultId);
+  });
+
+  // ── Clipboard history ───────────────────────────────────────────
+  ipcMain.handle(IPC_CHANNELS.GET_CLIPBOARD_HISTORY, () => {
+    return clipboardProvider.getHistory();
+  });
+
+  // ── Window snapping ─────────────────────────────────────────────
+  ipcMain.handle(IPC_CHANNELS.SNAP_WINDOW, async (_event, direction: SnapDirection) => {
+    await windowSnapper.snap(direction);
+  });
+
+  console.log('[IPC] All handlers registered');
+}
