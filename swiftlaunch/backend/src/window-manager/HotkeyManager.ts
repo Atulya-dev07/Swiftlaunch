@@ -7,17 +7,17 @@
 
 import type { BrowserWindow } from 'electron';
 
+import { globalShortcut } from 'electron';
+
 function getGlobalShortcutApi() {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require('electron').globalShortcut;
-  } catch {
-    return {
-      register: () => true,
-      unregister: () => {},
-      unregisterAll: () => {}
-    };
+  if (globalShortcut && typeof globalShortcut.register === 'function') {
+    return globalShortcut;
   }
+  return {
+    register: () => true,
+    unregister: () => {},
+    unregisterAll: () => {}
+  };
 }
 
 export class HotkeyManager {
@@ -38,28 +38,41 @@ export class HotkeyManager {
     this.createWindowFn = createWindow;
   }
 
-  /** Register the global hotkey. Returns true on success. */
+  /** Register the global hotkey(s). Returns true on success. */
   register(): boolean {
     const globalShortcut = getGlobalShortcutApi();
-    const registered = globalShortcut.register(this.currentHotkey, () => {
-      this.handleToggle();
-    });
+    const shortcutsToRegister = Array.from(new Set([this.currentHotkey, 'CommandOrControl+Space']));
+    let anySuccess = false;
 
-    if (!registered) {
-      console.error(`[HotkeyManager] Failed to register global shortcut: ${this.currentHotkey}`);
-    } else {
-      console.log(`[HotkeyManager] Registered global shortcut: ${this.currentHotkey}`);
+    for (const shortcut of shortcutsToRegister) {
+      try {
+        const registered = globalShortcut.register(shortcut, () => {
+          this.handleToggle();
+        });
+
+        if (!registered) {
+          console.warn(`[HotkeyManager] Failed to register global shortcut: ${shortcut}`);
+        } else {
+          console.log(`[HotkeyManager] Registered global shortcut: ${shortcut}`);
+          anySuccess = true;
+        }
+      } catch (err) {
+        console.error(`[HotkeyManager] Error registering ${shortcut}:`, err);
+      }
     }
 
-    return registered;
+    return anySuccess;
   }
 
-  /** Unregister the current hotkey. */
+  /** Unregister current hotkeys. */
   unregister(): void {
     try {
       const globalShortcut = getGlobalShortcutApi();
-      globalShortcut.unregister(this.currentHotkey);
-      console.log(`[HotkeyManager] Unregistered: ${this.currentHotkey}`);
+      const shortcutsToUnregister = Array.from(new Set([this.currentHotkey, 'CommandOrControl+Space']));
+      for (const shortcut of shortcutsToUnregister) {
+        globalShortcut.unregister(shortcut);
+      }
+      console.log(`[HotkeyManager] Unregistered shortcuts`);
     } catch {
       // May fail if not registered
     }
@@ -85,14 +98,18 @@ export class HotkeyManager {
 
   private handleToggle(): void {
     const win = this.windowRef?.();
-    if (!win) {
+    if (!win || win.isDestroyed()) {
       this.createWindowFn?.();
       return;
     }
-    if (win.isVisible()) {
+    if (win.isVisible() && !win.isMinimized()) {
       win.hide();
     } else {
+      if (win.isMinimized()) {
+        win.restore();
+      }
       win.show();
+      win.setAlwaysOnTop(true);
       win.focus();
     }
   }

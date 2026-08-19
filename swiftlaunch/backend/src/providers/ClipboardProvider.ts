@@ -12,16 +12,16 @@ import type { Provider } from './ProviderContract.js';
 const MAX_HISTORY = 50;
 const POLL_INTERVAL = 500;
 
+import { clipboard } from 'electron';
+
 function getClipboardApi() {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require('electron').clipboard;
-  } catch {
-    return {
-      readText: () => '',
-      writeText: () => {}
-    };
+  if (clipboard && typeof clipboard.readText === 'function') {
+    return clipboard;
   }
+  return {
+    readText: () => '',
+    writeText: () => {}
+  };
 }
 
 export class ClipboardProvider implements Provider {
