@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { setupMockApi } from './mockApi.js';
 import { useUiStore } from './state/useUiStore.js';
 import { useSearchStore } from './state/useSearchStore.js';
@@ -10,6 +10,7 @@ import { ResultsList } from './components/ResultsList.js';
 import { DetailPane } from './components/DetailPane.js';
 import { ActionPanel } from './components/ActionPanel.js';
 import { FooterHints } from './components/FooterHints.js';
+import { SettingsPage } from './components/SettingsPage.js';
 import './index.css';
 
 // Polyfill mock API in standalone browser dev mode
@@ -21,6 +22,8 @@ export const App: React.FC = () => {
   const actionPanelOpen = useSearchStore((state) => state.actionPanelOpen);
   const providerWarning = useSearchStore((state) => state.providerWarning);
   const setProviderWarning = useSearchStore((state) => state.setProviderWarning);
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Initialize search hook
   useLauncherSearch();
@@ -62,13 +65,27 @@ export const App: React.FC = () => {
     };
   }, [setProviderWarning]);
 
+  // Handle global Esc for Settings dialog
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && settingsOpen) {
+        e.preventDefault();
+        setSettingsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [settingsOpen]);
+
   return (
     <div className="launcher-window" data-theme={theme}>
-      <SearchBar />
+      <SearchBar onOpenSettings={() => setSettingsOpen(true)} />
 
       {providerWarning && (
         <div className="provider-warning-banner" role="alert">
-          <span className="warning-icon">⚠️</span>
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+            warning
+          </span>
           <span className="warning-text">{providerWarning}</span>
           <button
             type="button"
@@ -90,6 +107,8 @@ export const App: React.FC = () => {
       </div>
 
       <FooterHints />
+
+      {settingsOpen && <SettingsPage onClose={() => setSettingsOpen(false)} />}
     </div>
   );
 };

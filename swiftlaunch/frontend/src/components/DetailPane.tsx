@@ -1,111 +1,142 @@
 import React from 'react';
 import { useSearchStore } from '../state/useSearchStore.js';
+import { useResultActions } from '../hooks/useResultActions.js';
 
 export const DetailPane: React.FC = () => {
   const flatResults = useSearchStore((state) => state.flatResults);
   const selectedIndex = useSearchStore((state) => state.selectedIndex);
   const selectedResult = flatResults[selectedIndex] || null;
+  const { executeResultAction } = useResultActions();
 
   if (!selectedResult) {
     return (
-      <div className="detail-pane empty">
-        <div className="detail-empty-icon">💡</div>
-        <div className="detail-empty-text">Select an item to view details</div>
-      </div>
+      <aside className="detail-pane empty">
+        <span className="material-symbols-outlined detail-empty-icon">info</span>
+        <div className="detail-empty-text">Select an item to view preview details</div>
+      </aside>
     );
   }
 
   const providerId = (selectedResult.providerId || selectedResult.id.split(':')[0] || 'other').toLowerCase();
 
+  const getDetailIcon = (p: string, title: string): string => {
+    const ext = title.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return 'picture_as_pdf';
+    if (ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'svg') return 'image';
+    if (ext === 'doc' || ext === 'docx' || ext === 'txt' || ext === 'md') return 'description';
+    if (ext === 'zip' || ext === 'rar') return 'folder_zip';
+
+    switch (p) {
+      case 'app':
+        return 'apps';
+      case 'file':
+        return 'description';
+      case 'calc':
+        return 'calculate';
+      case 'clip':
+        return 'content_paste';
+      case 'google':
+        return 'travel_explore';
+      case 'plugin':
+        return 'extension';
+      default:
+        return 'preview';
+    }
+  };
+
+  const getKindLabel = (p: string, title: string): string => {
+    const ext = title.split('.').pop()?.toUpperCase();
+    switch (p) {
+      case 'app':
+        return 'Application';
+      case 'file':
+        return ext ? `${ext} Document` : 'File Item';
+      case 'calc':
+        return 'Math Calculation';
+      case 'clip':
+        return 'Clipboard Entry';
+      case 'google':
+        return 'Web Query';
+      case 'plugin':
+        return 'Plugin Command';
+      default:
+        return 'System Item';
+    }
+  };
+
+  const iconName = getDetailIcon(providerId, selectedResult.title);
+
   return (
-    <div className="detail-pane">
-      <div className="detail-header">
-        <span className="detail-icon">{selectedResult.icon}</span>
-        <div className="detail-title-group">
-          <div className="detail-title">{selectedResult.title}</div>
-          <div className="detail-badge">{providerId.toUpperCase()}</div>
-        </div>
+    <aside className="detail-pane" aria-label="Item Preview and Details">
+      {/* Top Preview Card */}
+      <div className="preview-card">
+        <div className="preview-grid-pattern" />
+        <span className="material-symbols-outlined preview-card-icon">{iconName}</span>
+        <div className="preview-card-title">{selectedResult.title}</div>
       </div>
 
-      <div className="detail-content">
-        {providerId === 'calc' && (
-          <div className="detail-section calc-section">
-            <div className="detail-label">Computed Result</div>
-            <div className="detail-calc-value">{selectedResult.title.replace(/^=\s*/, '')}</div>
-            <div className="detail-label" style={{ marginTop: '12px' }}>Expression</div>
-            <div className="detail-calc-expr">{selectedResult.subtitle.replace('Calculation: ', '')}</div>
-          </div>
-        )}
+      {/* Metadata Detail Information */}
+      <div className="detail-info-section">
+        <div className="detail-info-header">Information</div>
 
-        {providerId === 'file' && (
-          <div className="detail-section file-section">
-            <div className="detail-field">
-              <span className="detail-label">File Name</span>
-              <span className="detail-value">{selectedResult.title}</span>
-            </div>
-            <div className="detail-field">
-              <span className="detail-label">Location Path</span>
-              <span className="detail-value path-text">{selectedResult.subtitle}</span>
-            </div>
-            {selectedResult.score !== undefined && (
-              <div className="detail-field">
-                <span className="detail-label">Relevance Score</span>
-                <span className="detail-value">{selectedResult.score}</span>
-              </div>
-            )}
+        {providerId === 'calc' && (
+          <div className="calc-big-display">
+            <span className="detail-grid-label">Computed Result</span>
+            <div className="calc-big-value">{selectedResult.title.replace(/^=\s*/, '')}</div>
+            <span className="detail-grid-label" style={{ marginTop: '8px' }}>Expression</span>
+            <div className="calc-expr">{selectedResult.subtitle.replace('Calculation: ', '')}</div>
           </div>
         )}
 
         {providerId === 'clip' && (
-          <div className="detail-section clip-section">
-            <div className="detail-label">Clipboard Contents</div>
-            <div className="detail-clip-box">{selectedResult.title}</div>
-            <div className="detail-field" style={{ marginTop: '10px' }}>
-              <span className="detail-label">Meta Info</span>
-              <span className="detail-value">{selectedResult.subtitle}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span className="detail-grid-label">Clipboard Content</span>
+            <div className="clipboard-big-box">{selectedResult.title}</div>
+            <div className="detail-grid" style={{ marginTop: '6px' }}>
+              <span className="detail-grid-label">Kind</span>
+              <span className="detail-grid-value">Text Snippet</span>
+              <span className="detail-grid-label">Meta</span>
+              <span className="detail-grid-value mono">{selectedResult.subtitle}</span>
             </div>
           </div>
         )}
 
-        {providerId === 'app' && (
-          <div className="detail-section app-section">
-            <div className="detail-field">
-              <span className="detail-label">Application</span>
-              <span className="detail-value">{selectedResult.title}</span>
-            </div>
-            <div className="detail-field">
-              <span className="detail-label">Executable Path</span>
-              <span className="detail-value path-text">{selectedResult.subtitle}</span>
-            </div>
-          </div>
-        )}
+        {providerId !== 'calc' && providerId !== 'clip' && (
+          <div className="detail-grid">
+            <span className="detail-grid-label">Kind</span>
+            <span className="detail-grid-value">{getKindLabel(providerId, selectedResult.title)}</span>
 
-        {providerId === 'google' && (
-          <div className="detail-section google-section">
-            <div className="detail-field">
-              <span className="detail-label">Web Provider</span>
-              <span className="detail-value">Google Search</span>
-            </div>
-            <div className="detail-field">
-              <span className="detail-label">Query</span>
-              <span className="detail-value">{selectedResult.title.replace('Search Google for ', '')}</span>
-            </div>
-          </div>
-        )}
+            <span className="detail-grid-label">Target</span>
+            <span className="detail-grid-value mono" title={selectedResult.subtitle}>
+              {selectedResult.subtitle}
+            </span>
 
-        {providerId === 'plugin' && (
-          <div className="detail-section plugin-section">
-            <div className="detail-field">
-              <span className="detail-label">Command</span>
-              <span className="detail-value">{selectedResult.title}</span>
-            </div>
-            <div className="detail-field">
-              <span className="detail-label">Details</span>
-              <span className="detail-value">{selectedResult.subtitle}</span>
-            </div>
+            {selectedResult.score !== undefined && (
+              <>
+                <span className="detail-grid-label">Score</span>
+                <span className="detail-grid-value">{selectedResult.score}</span>
+              </>
+            )}
+
+            <span className="detail-grid-label">Provider</span>
+            <span className="detail-grid-value">{providerId.toUpperCase()}</span>
           </div>
         )}
       </div>
-    </div>
+
+      {/* Primary Action Button */}
+      <button
+        type="button"
+        className="detail-action-btn"
+        onClick={() => executeResultAction(selectedResult)}
+      >
+        <span className="btn-shimmer" />
+        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+          open_in_new
+        </span>
+        <span>Open Item</span>
+        <span className="keycap" style={{ marginLeft: '4px' }}>↵</span>
+      </button>
+    </aside>
   );
 };

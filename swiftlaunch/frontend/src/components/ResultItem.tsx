@@ -32,7 +32,7 @@ export const ResultItem: React.FC<ResultItemProps> = ({
       case 'calc':
         return 'Math';
       case 'clip':
-        return 'Clipboard';
+        return 'Clip';
       case 'google':
         return 'Web';
       case 'plugin':
@@ -42,10 +42,37 @@ export const ResultItem: React.FC<ResultItemProps> = ({
     }
   };
 
+  const getMaterialIcon = (p: string, title: string): string => {
+    const ext = title.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return 'picture_as_pdf';
+    if (ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'svg') return 'image';
+    if (ext === 'doc' || ext === 'docx' || ext === 'txt' || ext === 'md') return 'description';
+    if (ext === 'zip' || ext === 'rar' || ext === '7z') return 'folder_zip';
+
+    switch (p) {
+      case 'app':
+        return 'apps';
+      case 'file':
+        return 'description';
+      case 'calc':
+        return 'calculate';
+      case 'clip':
+        return 'content_paste';
+      case 'google':
+        return 'travel_explore';
+      case 'plugin':
+        return 'extension';
+      default:
+        return 'article';
+    }
+  };
+
   const handleExecute = (e: React.MouseEvent) => {
     e.stopPropagation();
     executeResultAction(result);
   };
+
+  const iconName = getMaterialIcon(providerId, result.title);
 
   return (
     <div
@@ -55,7 +82,7 @@ export const ResultItem: React.FC<ResultItemProps> = ({
       data-provider={providerId}
     >
       <div className="item-icon-wrapper">
-        <span className="item-icon">{result.icon || '📄'}</span>
+        <span className="material-symbols-outlined">{iconName}</span>
       </div>
 
       <div className="item-text-container">
@@ -74,7 +101,7 @@ export const ResultItem: React.FC<ResultItemProps> = ({
         )}
         {isSelected && (
           <div className="selected-action-badges">
-            <span className="inline-keycap">↵</span>
+            <span className="inline-keycap">↵ Open</span>
             <span className="inline-keycap">Tab</span>
           </div>
         )}

@@ -8,12 +8,16 @@ export const EmptyState: React.FC = () => {
 
   return (
     <div className="empty-state">
-      <div className="empty-icon">🔍</div>
+      <span className="material-symbols-outlined empty-icon">
+        {query ? 'manage_search' : 'terminal'}
+      </span>
       <div className="empty-title">
         {query ? `No results found for "${query}"` : 'Type a query or command to search'}
       </div>
       <div className="empty-subtitle">
-        {query ? 'Try checking your spelling or selecting a different category filter.' : 'Search across installed apps, indexing files, clipboard history, or math expressions.'}
+        {query
+          ? 'Check your spelling or reset category filters to expand search.'
+          : 'Instant launcher for Windows applications, indexed files, clipboard items, and math.'}
       </div>
 
       {activeGroup && (
@@ -28,13 +32,13 @@ export const EmptyState: React.FC = () => {
 
       <div className="empty-tips">
         <div className="tip-item">
-          <span className="tip-badge">App</span> Launch installed Windows applications
+          <span className="tip-badge">App</span> Launch apps like Chrome, VS Code, Notion
         </div>
         <div className="tip-item">
-          <span className="tip-badge">Math</span> Type math like <code>128 * 14.5</code>
+          <span className="tip-badge">Math</span> Direct calculations like <code>128 * 14.5</code>
         </div>
         <div className="tip-item">
-          <span className="tip-badge">Clip</span> Search or paste clipboard items
+          <span className="tip-badge">Clip</span> Search and paste clipboard history
         </div>
       </div>
     </div>

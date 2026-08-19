@@ -1,18 +1,18 @@
 import React from 'react';
 import { useSearchStore } from '../state/useSearchStore.js';
 
-interface ModePill {
+interface ModeTab {
   id: string | null;
   label: string;
-  icon: string;
+  iconName: string;
 }
 
-const PILLS: ModePill[] = [
-  { id: null, label: 'All', icon: '✨' },
-  { id: 'app', label: 'Apps', icon: '🚀' },
-  { id: 'file', label: 'Files', icon: '📄' },
-  { id: 'calc', label: 'Math', icon: '🧮' },
-  { id: 'clip', label: 'Clipboard', icon: '📋' }
+const TABS: ModeTab[] = [
+  { id: null, label: 'All', iconName: 'auto_awesome' },
+  { id: 'app', label: 'Apps', iconName: 'apps' },
+  { id: 'file', label: 'Files', iconName: 'folder_open' },
+  { id: 'calc', label: 'Math', iconName: 'calculate' },
+  { id: 'clip', label: 'Clipboard', iconName: 'content_paste' }
 ];
 
 export const SearchModePills: React.FC = () => {
@@ -20,21 +20,21 @@ export const SearchModePills: React.FC = () => {
   const setActiveGroup = useSearchStore((state) => state.setActiveGroup);
 
   return (
-    <div className="search-mode-pills">
-      {PILLS.map((pill) => {
-        const isActive = activeGroup === pill.id;
+    <nav className="mode-tabs-container" aria-label="Search filter modes">
+      {TABS.map((tab) => {
+        const isActive = activeGroup === tab.id;
         return (
           <button
-            key={pill.id ?? 'all'}
+            key={tab.id ?? 'all'}
             type="button"
-            className={`mode-pill ${isActive ? 'active' : ''}`}
-            onClick={() => setActiveGroup(pill.id)}
+            className={`mode-tab ${isActive ? 'active' : ''}`}
+            onClick={() => setActiveGroup(tab.id)}
           >
-            <span className="pill-icon">{pill.icon}</span>
-            <span className="pill-label">{pill.label}</span>
+            <span className="material-symbols-outlined mode-tab-icon">{tab.iconName}</span>
+            <span>{tab.label}</span>
           </button>
         );
       })}
-    </div>
+    </nav>
   );
 };
