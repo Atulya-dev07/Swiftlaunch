@@ -1,52 +1,45 @@
-import test from 'node:test';
-import assert from 'node:assert';
+import { describe, it, expect } from 'vitest';
+import { CalculatorProvider } from '../src/providers/CalculatorProvider.js';
 
-/**
- * Tests for CalculatorProvider — evaluates math expressions via mathjs.
- */
-test('CalculatorProvider: evaluates 12*4 = 48', async () => {
-  const { CalculatorProvider } = await import('../src/providers/CalculatorProvider.js');
-  const provider = new CalculatorProvider();
-  const results = await provider.getResults('12*4');
-  assert.ok(results.length >= 1, 'Should return at least one result');
-  assert.strictEqual(results[0].title, '48');
-  assert.ok(results[0].subtitle.includes('48'));
-});
+describe('CalculatorProvider', () => {
+  it('evaluates 12*4 = 48', async () => {
+    const provider = new CalculatorProvider();
+    const results = await provider.getResults('12*4');
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    expect(results[0].title).toBe('48');
+    expect(results[0].subtitle).toContain('48');
+  });
 
-test('CalculatorProvider: evaluates sqrt(9) = 3', async () => {
-  const { CalculatorProvider } = await import('../src/providers/CalculatorProvider.js');
-  const provider = new CalculatorProvider();
-  const results = await provider.getResults('sqrt(9)');
-  assert.ok(results.length >= 1, 'Should return at least one result');
-  assert.strictEqual(results[0].title, '3');
-});
+  it('evaluates sqrt(9) = 3', async () => {
+    const provider = new CalculatorProvider();
+    const results = await provider.getResults('sqrt(9)');
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    expect(results[0].title).toBe('3');
+  });
 
-test('CalculatorProvider: evaluates 2+2 = 4', async () => {
-  const { CalculatorProvider } = await import('../src/providers/CalculatorProvider.js');
-  const provider = new CalculatorProvider();
-  const results = await provider.getResults('2+2');
-  assert.ok(results.length >= 1);
-  assert.strictEqual(results[0].title, '4');
-});
+  it('evaluates 2+2 = 4', async () => {
+    const provider = new CalculatorProvider();
+    const results = await provider.getResults('2+2');
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    expect(results[0].title).toBe('4');
+  });
 
-test('CalculatorProvider: ignores plain text', async () => {
-  const { CalculatorProvider } = await import('../src/providers/CalculatorProvider.js');
-  const provider = new CalculatorProvider();
-  const results = await provider.getResults('hello');
-  assert.strictEqual(results.length, 0, 'Should return no results for plain text');
-});
+  it('ignores plain text', async () => {
+    const provider = new CalculatorProvider();
+    const results = await provider.getResults('hello');
+    expect(results.length).toBe(0);
+  });
 
-test('CalculatorProvider: ignores invalid expressions', async () => {
-  const { CalculatorProvider } = await import('../src/providers/CalculatorProvider.js');
-  const provider = new CalculatorProvider();
-  const results = await provider.getResults('12*');
-  assert.strictEqual(results.length, 0, 'Should return no results for incomplete expression');
-});
+  it('ignores invalid expressions', async () => {
+    const provider = new CalculatorProvider();
+    const results = await provider.getResults('12*');
+    expect(results.length).toBe(0);
+  });
 
-test('CalculatorProvider: has score 100', async () => {
-  const { CalculatorProvider } = await import('../src/providers/CalculatorProvider.js');
-  const provider = new CalculatorProvider();
-  const results = await provider.getResults('5*5');
-  assert.ok(results.length >= 1);
-  assert.strictEqual(results[0].score, 100);
+  it('has score 100', async () => {
+    const provider = new CalculatorProvider();
+    const results = await provider.getResults('5*5');
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    expect(results[0].score).toBe(100);
+  });
 });

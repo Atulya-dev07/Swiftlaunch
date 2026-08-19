@@ -1,49 +1,65 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
+import { useSearchStore } from '../state/useSearchStore.js';
+import { SearchModePills } from './SearchModePills.js';
 
-interface SearchBarProps {
-  query: string;
-  onQueryChange: (query: string) => void;
-}
+export const SearchBar: React.FC = () => {
+  const query = useSearchStore((state) => state.query);
+  const setQuery = useSearchStore((state) => state.setQuery);
+  const isLoading = useSearchStore((state) => state.isLoading);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-export const SearchBar: React.FC<SearchBarProps> = ({ query, onQueryChange }) => {
+  useEffect(() => {
+    // Keep focus in input when launcher opens
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleClear = () => {
+    setQuery('');
+    inputRef.current?.focus();
+  };
+
   return (
-    <div style={styles.container}>
-      <span style={styles.searchIcon}>🔍</span>
-      <input
-        type="text"
-        placeholder="Type a command or search..."
-        value={query}
-        onChange={(e) => onQueryChange(e.target.value)}
-        autoFocus
-        style={styles.input}
-      />
+    <div className="search-bar-container">
+      <div className="search-bar-row">
+        <div className="search-icon-wrapper">
+          {isLoading ? (
+            <span className="search-spinner" />
+          ) : (
+            <span className="search-icon">🔍</span>
+          )}
+        </div>
+
+        <input
+          ref={inputRef}
+          type="text"
+          className="search-input"
+          placeholder="Search apps, files, clipboard, math expressions..."
+          value={query}
+          onChange={(e) => {
+            console.log(`[SearchBar] Input query: "${e.target.value}"`);
+            setQuery(e.target.value);
+          }}
+          autoFocus
+          spellCheck={false}
+          autoComplete="off"
+        />
+
+        {query.length > 0 && (
+          <button
+            type="button"
+            className="search-clear-btn"
+            onClick={handleClear}
+            title="Clear search"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      <SearchModePills />
     </div>
   );
-};
-
-type StyleWithWebkit = React.CSSProperties & { WebkitAppRegion?: 'drag' | 'no-drag' };
-
-const styles: Record<string, StyleWithWebkit> = {
-  container: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '14px 18px',
-    borderBottom: '1px solid var(--border-color)',
-    gap: '12px',
-    WebkitAppRegion: 'drag'
-  },
-  searchIcon: {
-    fontSize: '18px',
-    opacity: 0.7
-  },
-  input: {
-    flex: 1,
-    background: 'transparent',
-    border: 'none',
-    outline: 'none',
-    color: 'var(--text-primary)',
-    fontSize: '18px',
-    fontFamily: 'var(--font-family)',
-    WebkitAppRegion: 'no-drag'
-  }
 };

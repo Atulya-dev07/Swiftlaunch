@@ -39,10 +39,20 @@ export function registerIpcHandlers(deps: HandlerDependencies): void {
   ipcMain.handle(IPC_CHANNELS.SEARCH, async (_event, query: string): Promise<Result[]> => {
     if (!query || query.trim().length === 0) return [];
 
-    // Fan out to providers
+    const isFileScope = /^#(files?|file)\b/i.test(query.trim());
+    console.log(`[IPC] received search: ${query}`);
+
+    // Fan out to providers (handles #files scope internally)
     const providerResults = await registry.search(query);
 
-    // Fan out to plugins
+    // In #files scope, exclusively return FileProvider results (no plugins/apps/clip)
+    if (isFileScope) {
+      const scopedResults = providerResults.slice(0, 50);
+      console.log(`[IPC] returning ${scopedResults.length} results`);
+      return scopedResults;
+    }
+
+    // Fan out to plugins for non-scoped search
     let pluginResults: Result[] = [];
     try {
       pluginResults = await pluginLoader.search(query);
@@ -65,7 +75,9 @@ export function registerIpcHandlers(deps: HandlerDependencies): void {
     // Re-sort with boosts applied
     allResults.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
-    return allResults.slice(0, 30);
+    const finalResults = allResults.slice(0, 50);
+    console.log(`[IPC] returning ${finalResults.length} results`);
+    return finalResults;
   });
 
   // ── Execute action ──────────────────────────────────────────────
@@ -101,7 +113,14 @@ export function registerIpcHandlers(deps: HandlerDependencies): void {
       // Try generic open for file: results
       if (providerId === 'file') {
         const filePath = resultId.replace('file:', '');
-        await shell.openPath(filePath);
+        if (actionId === 'show_in_folder' || actionId === 'reveal' || actionId === 'open_folder') {
+          shell.showItemInFolder(filePath);
+          return;
+        }
+        const err = await shell.openPath(filePath);
+        if (err) {
+          console.error(`[IPC:EXECUTE_ACTION] shell.openPath failed for ${filePath}: ${err}`);
+        }
         return;
       }
 

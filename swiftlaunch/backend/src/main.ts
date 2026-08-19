@@ -30,11 +30,19 @@ const __dirname = path.dirname(__filename);
 let mainWindow: BrowserWindow | null = null;
 
 function getPreloadPath(): string {
+  const cjsPath = path.join(__dirname, '../preload/index.cjs');
+  if (fs.existsSync(cjsPath)) {
+    return cjsPath;
+  }
+  const jsPath = path.join(__dirname, '../preload/index.js');
+  if (fs.existsSync(jsPath)) {
+    return jsPath;
+  }
   const mjsPath = path.join(__dirname, '../preload/index.mjs');
   if (fs.existsSync(mjsPath)) {
     return mjsPath;
   }
-  return path.join(__dirname, '../preload/index.js');
+  return path.join(__dirname, '../preload/index.cjs');
 }
 
 function createWindow(): void {
@@ -72,15 +80,12 @@ function createWindow(): void {
 }
 
 app.whenReady().then(async () => {
-  // ── Create Window ───────────────────────────────────────────────
-  createWindow();
-
-  // ── Initialize Database ─────────────────────────────────────────
+  // ── 1. Initialize Database ─────────────────────────────────────────
   const dbDir = app.getPath('userData');
   const db = initDatabase(dbDir);
   const dbQueries = new DbQueries(db);
 
-  // ── Initialize Providers ────────────────────────────────────────
+  // ── 2. Initialize Providers ────────────────────────────────────────
   const registry = new ProviderRegistry();
 
   const appProvider = new AppProvider();
@@ -105,17 +110,12 @@ app.whenReady().then(async () => {
   registry.register(fileProvider);
   registry.register(clipboardProvider);
 
-  await registry.initializeAll();
-
-  // ── Initialize Plugin Host ──────────────────────────────────────
+  // ── 3. Initialize Plugin Host & Window Snapper ───────────────────
   const pluginDir = path.join(app.getPath('userData'), 'plugins');
   const pluginLoader = new PluginLoader(pluginDir);
-  await pluginLoader.loadAll();
-
-  // ── Initialize Window Snapper ───────────────────────────────────
   const windowSnapper = new WindowSnapper();
 
-  // ── Register IPC Handlers ───────────────────────────────────────
+  // ── 4. Register IPC Handlers BEFORE loading BrowserWindow ────────
   registerIpcHandlers({
     registry,
     clipboardProvider,
@@ -124,7 +124,14 @@ app.whenReady().then(async () => {
     windowSnapper
   });
 
-  // ── Register Global Hotkeys ─────────────────────────────────────
+  // ── 5. Initialize Providers and Plugins ─────────────────────────
+  await registry.initializeAll();
+  await pluginLoader.loadAll();
+
+  // ── 6. Create Window AFTER IPC handlers are registered ───────────
+  createWindow();
+
+  // ── 7. Register Global Hotkeys ──────────────────────────────────
   const hotkeyManager = new HotkeyManager('Alt+Space');
   hotkeyManager.setWindowCallbacks(
     () => mainWindow,

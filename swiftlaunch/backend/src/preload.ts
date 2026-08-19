@@ -2,12 +2,14 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { IPC_CHANNELS } from '@swiftlaunch/shared';
 import type { Result, ClipboardEntry } from '@swiftlaunch/shared';
 
+console.log('[Preload] SwiftLaunch API exposed');
+
 contextBridge.exposeInMainWorld('api', {
   // Health check
-  ping: () => ipcRenderer.invoke(IPC_CHANNELS.PING),
+  ping: (): Promise<string> => ipcRenderer.invoke(IPC_CHANNELS.PING),
 
   // Window management
-  hideWindow: () => ipcRenderer.send(IPC_CHANNELS.HIDE_WINDOW),
+  hideWindow: (): void => ipcRenderer.send(IPC_CHANNELS.HIDE_WINDOW),
 
   // Search
   search: (query: string): Promise<Result[]> => ipcRenderer.invoke(IPC_CHANNELS.SEARCH, query),
@@ -28,10 +30,14 @@ contextBridge.exposeInMainWorld('api', {
   snapWindow: (direction: string): Promise<void> =>
     ipcRenderer.invoke(IPC_CHANNELS.SNAP_WINDOW, direction),
 
-  // Listen for provider warnings
-  onProviderWarning: (callback: (message: string) => void): void => {
-    ipcRenderer.on(IPC_CHANNELS.PROVIDER_WARNING, (_event, message: string) => {
+  // Listen for provider warnings (returns unsubscribe function)
+  onProviderWarning: (callback: (message: string) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, message: string) => {
       callback(message);
-    });
+    };
+    ipcRenderer.on(IPC_CHANNELS.PROVIDER_WARNING, listener);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.PROVIDER_WARNING, listener);
+    };
   }
 });

@@ -13,11 +13,15 @@ export default defineConfig({
     }
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin({ exclude: ['@swiftlaunch/shared'] })],
     build: {
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/preload.ts')
+        },
+        output: {
+          format: 'cjs',
+          entryFileNames: '[name].cjs'
         }
       }
     }

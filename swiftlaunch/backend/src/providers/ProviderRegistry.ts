@@ -67,20 +67,46 @@ export class ProviderRegistry {
   }
 
   /**
-   * Fan out a search query to all enabled providers in parallel,
-   * merge results, and return them sorted by score (descending).
+   * Fan out a search query to all enabled providers in parallel (or route to
+   * a single provider if scoped with a prefix like #files), merge results,
+   * and return them sorted by score (descending).
    */
   async search(query: string): Promise<Result[]> {
     if (!query || query.trim().length === 0) {
       return [];
     }
 
+    const trimmed = query.trim();
+
+    // Check for #files / #file scope prefix
+    const isFileScope = /^#(files?|file)\b/i.test(trimmed);
+    if (isFileScope) {
+      const scopedQuery = trimmed.replace(/^#(files?|file)\s*/i, '').trim();
+      console.log(`[ProviderRegistry] Scoped file search detected: original="${trimmed}", queryToProvider="${scopedQuery}"`);
+      const fileProvider = this.providers.get('FileProvider');
+      if (!fileProvider || !fileProvider.enabled) {
+        console.warn('[ProviderRegistry] FileProvider is not available or disabled for scoped search');
+        return [];
+      }
+      try {
+        const fileResults = await fileProvider.getResults(scopedQuery);
+        console.log(`[ProviderRegistry] Provider "${fileProvider.name}" returned ${fileResults.length} result(s)`);
+        return fileResults;
+      } catch (err) {
+        console.error('[ProviderRegistry] Error from FileProvider:', err);
+        return [];
+      }
+    }
+
     const enabledProviders = Array.from(this.providers.values()).filter((p) => p.enabled);
+    console.log(`[ProviderRegistry] Fan-out search query="${trimmed}" across ${enabledProviders.length} enabled provider(s)`);
 
     const settled = await Promise.allSettled(
       enabledProviders.map(async (provider) => {
         try {
-          return await provider.getResults(query.trim());
+          const results = await provider.getResults(trimmed);
+          console.log(`[ProviderRegistry] Provider "${provider.name}" returned ${results.length} result(s)`);
+          return results;
         } catch (err) {
           console.error(`[ProviderRegistry] Error from ${provider.name}:`, err);
           return [];

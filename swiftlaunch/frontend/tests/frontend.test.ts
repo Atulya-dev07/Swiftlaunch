@@ -1,6 +1,7 @@
-import test from 'node:test';
-import assert from 'node:assert';
+import { describe, it, expect } from 'vitest';
 
-test('frontend skeleton placeholder test', () => {
-  assert.strictEqual(1 + 1, 2);
+describe('frontend skeleton test', () => {
+  it('passes simple sanity assertion', () => {
+    expect(1 + 1).toBe(2);
+  });
 });

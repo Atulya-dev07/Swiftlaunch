@@ -1,63 +1,84 @@
 import React from 'react';
-import { Result } from '@swiftlaunch/shared';
+import type { Result } from '@swiftlaunch/shared';
+import { useResultActions } from '../hooks/useResultActions.js';
 
 interface ResultItemProps {
   result: Result;
   isSelected?: boolean;
+  itemIndex?: number;
+  onClick?: () => void;
+  onDoubleClick?: () => void;
 }
 
-export const ResultItem: React.FC<ResultItemProps> = ({ result, isSelected }) => {
+export const ResultItem: React.FC<ResultItemProps> = ({
+  result,
+  isSelected = false,
+  itemIndex,
+  onClick,
+  onDoubleClick
+}) => {
+  const { executeResultAction } = useResultActions();
+
+  const providerId = (result.providerId || result.id.split(':')[0] || 'other')
+    .toLowerCase()
+    .replace(/provider$/, '');
+
+  const getProviderBadgeLabel = (p: string): string => {
+    switch (p) {
+      case 'app':
+        return 'App';
+      case 'file':
+        return 'File';
+      case 'calc':
+        return 'Math';
+      case 'clip':
+        return 'Clipboard';
+      case 'google':
+        return 'Web';
+      case 'plugin':
+        return 'Plugin';
+      default:
+        return p;
+    }
+  };
+
+  const handleExecute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    executeResultAction(result);
+  };
+
   return (
     <div
-      style={{
-        ...styles.item,
-        ...(isSelected ? styles.selectedItem : {})
-      }}
+      className={`result-item ${isSelected ? 'selected' : ''}`}
+      onClick={onClick}
+      onDoubleClick={onDoubleClick || handleExecute}
+      data-provider={providerId}
     >
-      <span style={styles.icon}>{result.icon}</span>
-      <div style={styles.textContainer}>
-        <div style={styles.title}>{result.title}</div>
-        <div style={styles.subtitle}>{result.subtitle}</div>
+      <div className="item-icon-wrapper">
+        <span className="item-icon">{result.icon || '📄'}</span>
+      </div>
+
+      <div className="item-text-container">
+        <div className="item-title-row">
+          <span className="item-title">{result.title}</span>
+          <span className={`item-provider-badge badge-${providerId}`}>
+            {getProviderBadgeLabel(providerId)}
+          </span>
+        </div>
+        <div className="item-subtitle">{result.subtitle}</div>
+      </div>
+
+      <div className="item-actions-hint">
+        {itemIndex !== undefined && itemIndex < 9 && (
+          <span className="quick-shortcut-hint">Ctrl+{itemIndex + 1}</span>
+        )}
+        {isSelected && (
+          <div className="selected-action-badges">
+            <span className="inline-keycap">↵</span>
+            <span className="inline-keycap">Tab</span>
+          </div>
+        )}
       </div>
     </div>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  item: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '10px 14px',
-    borderRadius: '8px',
-    gap: '12px',
-    cursor: 'pointer',
-    transition: 'background-color 0.15s ease'
-  },
-  selectedItem: {
-    backgroundColor: 'var(--bg-hover)',
-    boxShadow: '0 0 0 1px var(--accent-glow)'
-  },
-  icon: {
-    fontSize: '20px',
-    width: '28px',
-    height: '28px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'var(--bg-secondary)',
-    borderRadius: '6px'
-  },
-  textContainer: {
-    display: 'flex',
-    flexDirection: 'column'
-  },
-  title: {
-    fontSize: '14px',
-    fontWeight: 500,
-    color: 'var(--text-primary)'
-  },
-  subtitle: {
-    fontSize: '12px',
-    color: 'var(--text-secondary)'
-  }
 };

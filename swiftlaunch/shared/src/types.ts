@@ -54,3 +54,14 @@ export interface UsageRecord {
   selectedResultId: string;
   timestamp: number;
 }
+
+export interface SwiftLaunchApi {
+  ping: () => Promise<string>;
+  hideWindow: () => void;
+  search: (query: string) => Promise<Result[]>;
+  executeAction: (resultId: string, actionId?: string) => Promise<void>;
+  logUsage: (query: string, resultId: string) => void;
+  getClipboardHistory: () => Promise<ClipboardEntry[]>;
+  snapWindow: (direction: string) => Promise<void>;
+  onProviderWarning: (callback: (message: string) => void) => () => void;
+}

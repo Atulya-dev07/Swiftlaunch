@@ -1,6 +1,7 @@
-import test from 'node:test';
-import assert from 'node:assert';
+import { describe, it, expect } from 'vitest';
 
-test('backend skeleton placeholder test', () => {
-  assert.strictEqual(true, true);
+describe('backend smoke test', () => {
+  it('passes backend skeleton placeholder test', () => {
+    expect(true).toBe(true);
+  });
 });

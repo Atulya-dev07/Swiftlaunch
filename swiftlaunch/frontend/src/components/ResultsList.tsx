@@ -1,39 +1,85 @@
-import React from 'react';
-import { Result } from '@swiftlaunch/shared';
+import React, { useRef, useEffect } from 'react';
+import { useSearchStore } from '../state/useSearchStore.js';
 import { ResultItem } from './ResultItem.js';
+import { SectionHeader } from './SectionHeader.js';
+import { EmptyState } from './EmptyState.js';
+import { LoadingState } from './LoadingState.js';
 
-interface ResultsListProps {
-  results: Result[];
-  selectedIndex?: number;
-}
+export const ResultsList: React.FC = () => {
+  const groupedResults = useSearchStore((state) => state.groupedResults);
+  const flatResults = useSearchStore((state) => state.flatResults);
+  const selectedIndex = useSearchStore((state) => state.selectedIndex);
+  const setSelectedIndex = useSearchStore((state) => state.setSelectedIndex);
+  const isLoading = useSearchStore((state) => state.isLoading);
+  const error = useSearchStore((state) => state.error);
 
-export const ResultsList: React.FC<ResultsListProps> = ({ results, selectedIndex = 0 }) => {
-  if (results.length === 0) {
-    return <div style={styles.empty}>No results found</div>;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+
+  useEffect(() => {
+    const selectedEl = itemRefs.current.get(selectedIndex);
+    if (selectedEl && containerRef.current) {
+      selectedEl.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth'
+      });
+    }
+  }, [selectedIndex]);
+
+  if (isLoading && flatResults.length === 0) {
+    return <LoadingState />;
   }
+
+  if (error && flatResults.length === 0) {
+    return (
+      <div className="search-error-state" role="alert" style={{ padding: '32px 16px', textAlign: 'center', color: '#ef4444' }}>
+        <div style={{ fontSize: '28px', marginBottom: '8px' }}>⚠️</div>
+        <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '4px' }}>{error}</div>
+        <div style={{ fontSize: '12px', opacity: 0.8 }}>Please check Electron preload and IPC configuration.</div>
+      </div>
+    );
+  }
+
+  if (flatResults.length === 0) {
+    return <EmptyState />;
+  }
+
+  let globalIndexCounter = 0;
 
   return (
-    <div style={styles.list}>
-      {results.map((item, index) => (
-        <ResultItem key={item.id} result={item} isSelected={index === selectedIndex} />
-      ))}
+    <div className="results-list-container" ref={containerRef}>
+      {Object.entries(groupedResults).map(([categoryName, items]) => {
+        if (!items || items.length === 0) return null;
+
+        return (
+          <div key={categoryName} className="result-category-group">
+            <SectionHeader title={categoryName} count={items.length} />
+            <div className="category-items-list">
+              {items.map((item) => {
+                const currentIndex = globalIndexCounter++;
+                const isSelected = currentIndex === selectedIndex;
+
+                return (
+                  <div
+                    key={item.id}
+                    ref={(el) => {
+                      if (el) itemRefs.current.set(currentIndex, el);
+                      else itemRefs.current.delete(currentIndex);
+                    }}
+                  >
+                    <ResultItem
+                      result={item}
+                      isSelected={isSelected}
+                      itemIndex={currentIndex}
+                      onClick={() => setSelectedIndex(currentIndex)}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  list: {
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '10px',
-    gap: '4px',
-    overflowY: 'auto',
-    flex: 1
-  },
-  empty: {
-    padding: '30px',
-    textAlign: 'center',
-    color: 'var(--text-secondary)',
-    fontSize: '14px'
-  }
 };

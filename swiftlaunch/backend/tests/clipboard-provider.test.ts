@@ -1,13 +1,11 @@
-import test from 'node:test';
-import assert from 'node:assert';
+import { describe, it, expect } from 'vitest';
+import { ClipboardProvider } from '../src/providers/ClipboardProvider.js';
 
-test('ClipboardProvider: history retrieval and search filtering', async () => {
-  const { ClipboardProvider } = await import('../src/providers/ClipboardProvider.js');
-  const provider = new ClipboardProvider();
-
-  // Initially empty history
-  const initial = await provider.getResults('test');
-  assert.strictEqual(initial.length, 0);
-
-  provider.dispose();
+describe('ClipboardProvider', () => {
+  it('history retrieval and search filtering', async () => {
+    const provider = new ClipboardProvider();
+    const initial = await provider.getResults('test');
+    expect(initial.length).toBe(0);
+    provider.dispose();
+  });
 });

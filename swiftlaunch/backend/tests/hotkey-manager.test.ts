@@ -1,9 +1,9 @@
-import test from 'node:test';
-import assert from 'node:assert';
+import { describe, it, expect } from 'vitest';
+import { HotkeyManager } from '../src/window-manager/HotkeyManager.js';
 
-test('HotkeyManager: hotkey string management', async () => {
-  const { HotkeyManager } = await import('../src/window-manager/HotkeyManager.js');
-  const manager = new HotkeyManager('Alt+Space');
-
-  assert.strictEqual(manager.getHotkey(), 'Alt+Space');
+describe('HotkeyManager', () => {
+  it('hotkey string management', () => {
+    const manager = new HotkeyManager('Alt+Space');
+    expect(manager.getHotkey()).toBe('Alt+Space');
+  });
 });

@@ -7,3 +7,6 @@ allowBuilds:
   better-sqlite3: true
   electron: true
   esbuild: true
+  ffi-napi: false
+  lzma-native: true
+  ref-napi: true

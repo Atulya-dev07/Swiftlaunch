@@ -1,134 +1,95 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { Result } from '@swiftlaunch/shared';
+import React, { useEffect } from 'react';
+import { setupMockApi } from './mockApi.js';
+import { useUiStore } from './state/useUiStore.js';
+import { useSearchStore } from './state/useSearchStore.js';
+import { useLauncherSearch } from './hooks/useLauncherSearch.js';
+import { useKeyboardNavigation } from './hooks/useKeyboardNavigation.js';
+import { useLauncherVisibility } from './hooks/useLauncherVisibility.js';
 import { SearchBar } from './components/SearchBar.js';
 import { ResultsList } from './components/ResultsList.js';
+import { DetailPane } from './components/DetailPane.js';
+import { ActionPanel } from './components/ActionPanel.js';
+import { FooterHints } from './components/FooterHints.js';
 import './index.css';
 
-const DUMMY_RESULTS: Result[] = [
-  {
-    id: '1',
-    icon: '🧮',
-    title: 'Calculator',
-    subtitle: 'Perform fast math calculations'
-  },
-  {
-    id: '2',
-    icon: '⚙️',
-    title: 'System Settings',
-    subtitle: 'Configure system parameters'
-  },
-  {
-    id: '3',
-    icon: '💻',
-    title: 'Terminal',
-    subtitle: 'Open command line terminal'
-  }
-];
+// Polyfill mock API in standalone browser dev mode
+setupMockApi();
 
 export const App: React.FC = () => {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Result[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const theme = useUiStore((state) => state.theme);
+  const detailPaneOpen = useSearchStore((state) => state.detailPaneOpen);
+  const actionPanelOpen = useSearchStore((state) => state.actionPanelOpen);
+  const providerWarning = useSearchStore((state) => state.providerWarning);
+  const setProviderWarning = useSearchStore((state) => state.setProviderWarning);
 
-  const hasApi = !!(window.api && typeof window.api.search === 'function');
+  // Initialize search hook
+  useLauncherSearch();
 
-  // Debounced search via IPC
-  const doSearch = useCallback(
-    (q: string) => {
-      if (!hasApi) {
-        // Browser fallback: filter dummy results
-        const filtered = DUMMY_RESULTS.filter(
-          (item) =>
-            item.title.toLowerCase().includes(q.toLowerCase()) ||
-            item.subtitle.toLowerCase().includes(q.toLowerCase())
-        );
-        setResults(filtered);
-        setSelectedIndex(0);
-        return;
-      }
+  // Initialize visibility reset hook
+  useLauncherVisibility();
 
-      if (!q.trim()) {
-        setResults([]);
-        setSelectedIndex(0);
-        return;
-      }
-
-      window.api!.search(q).then((res) => {
-        setResults(res);
-        setSelectedIndex(0);
-      }).catch((err) => {
-        console.error('[Search] Error:', err);
-        setResults([]);
-      });
-    },
-    [hasApi]
-  );
-
-  const handleQueryChange = useCallback(
-    (q: string) => {
-      setQuery(q);
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-      debounceTimer.current = setTimeout(() => doSearch(q), 150);
-    },
-    [doSearch]
-  );
+  // Initialize keyboard navigation hook
+  useKeyboardNavigation();
 
   useEffect(() => {
-    // Validate IPC ping round-trip on mount
+    // Diagnostic ping on mount
     if (window.api && typeof window.api.ping === 'function') {
       window.api
         .ping()
-        .then((response) => {
-          console.log(`[IPC] Ping response: ${response}`);
+        .then((res) => {
+          console.log(`[Renderer] IPC ping successful: ${res}`);
         })
         .catch((err) => {
-          console.error('[IPC] Ping error:', err);
+          console.error('[Renderer] IPC ping error:', err);
         });
     } else {
-      console.log('[Browser Mode] window.api unavailable');
+      if (typeof navigator !== 'undefined' && /electron/i.test(navigator.userAgent)) {
+        console.error('[Renderer] Electron preload API unavailable');
+      }
     }
 
     // Listen for provider warnings
+    let unsubscribe: (() => void) | undefined;
     if (window.api && typeof window.api.onProviderWarning === 'function') {
-      window.api.onProviderWarning((message) => {
-        console.warn(`[Provider Warning] ${message}`);
+      unsubscribe = window.api.onProviderWarning((msg) => {
+        console.warn(`[App:ProviderWarning] ${msg}`);
+        setProviderWarning(msg);
       });
     }
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (window.api && typeof window.api.hideWindow === 'function') {
-          window.api.hideWindow();
-        }
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setSelectedIndex((prev) => Math.min(prev + 1, results.length - 1));
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setSelectedIndex((prev) => Math.max(prev - 1, 0));
-      } else if (e.key === 'Enter' && results.length > 0) {
-        e.preventDefault();
-        const selected = results[selectedIndex];
-        if (selected && window.api) {
-          window.api.executeAction(selected.id, selected.actionId);
-          window.api.logUsage(query, selected.id);
-          window.api.hideWindow();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      unsubscribe?.();
     };
-  }, [results, selectedIndex, query]);
+  }, [setProviderWarning]);
 
   return (
-    <div className="launcher-window">
-      <SearchBar query={query} onQueryChange={handleQueryChange} />
-      <ResultsList results={results} selectedIndex={selectedIndex} />
+    <div className="launcher-window" data-theme={theme}>
+      <SearchBar />
+
+      {providerWarning && (
+        <div className="provider-warning-banner" role="alert">
+          <span className="warning-icon">⚠️</span>
+          <span className="warning-text">{providerWarning}</span>
+          <button
+            type="button"
+            className="warning-dismiss-btn"
+            onClick={() => setProviderWarning(null)}
+            title="Dismiss warning"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      <div className="launcher-content-area">
+        <ResultsList />
+
+        {detailPaneOpen && !actionPanelOpen && <DetailPane />}
+
+        {actionPanelOpen && <ActionPanel />}
+      </div>
+
+      <FooterHints />
     </div>
   );
 };
