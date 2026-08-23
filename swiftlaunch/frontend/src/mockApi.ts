@@ -104,6 +104,25 @@ const MOCK_CLIPBOARD_ENTRIES: ClipboardEntry[] = [
   }
 ];
 
+const MOCK_CONTEXT_RESULTS: Result[] = [
+  {
+    id: 'app:c:/Users/User/AppData/Local/Programs/Microsoft VS Code/Code.exe',
+    providerId: 'context',
+    icon: '💻',
+    title: 'Visual Studio Code',
+    subtitle: 'Related to your screen · 94% match',
+    score: 98
+  },
+  {
+    id: 'file:c:/Users/User/Documents/Project-Architecture.pdf',
+    providerId: 'context',
+    icon: '📄',
+    title: 'Project-Architecture.pdf',
+    subtitle: 'Related to your screen · 88% match',
+    score: 92
+  }
+];
+
 export function isElectron(): boolean {
   if (typeof navigator === 'undefined') return false;
   if (/electron/i.test(navigator.userAgent)) return true;
@@ -196,6 +215,19 @@ export function setupMockApi(): void {
       console.log('[Mock API] Registered onProviderWarning listener');
       return () => {
         console.log('[Mock API] Unsubscribed onProviderWarning listener');
+      };
+    },
+
+    onContextResultsUpdated: (callback: (results: Result[]) => void): (() => void) => {
+      console.log('[Mock API] Registered onContextResultsUpdated listener');
+      // Simulate delayed arrival of context results in standalone browser dev mode
+      const timer = setTimeout(() => {
+        callback(MOCK_CONTEXT_RESULTS);
+      }, 500);
+
+      return () => {
+        clearTimeout(timer);
+        console.log('[Mock API] Unsubscribed onContextResultsUpdated listener');
       };
     }
   };

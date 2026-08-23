@@ -5,6 +5,7 @@ import { useSearchStore } from './state/useSearchStore.js';
 import { useLauncherSearch } from './hooks/useLauncherSearch.js';
 import { useKeyboardNavigation } from './hooks/useKeyboardNavigation.js';
 import { useLauncherVisibility } from './hooks/useLauncherVisibility.js';
+import { useContextResults } from './hooks/useContextResults.js';
 import { SearchBar } from './components/SearchBar.js';
 import { ResultsList } from './components/ResultsList.js';
 import { DetailPane } from './components/DetailPane.js';
@@ -33,6 +34,9 @@ export const App: React.FC = () => {
 
   // Initialize keyboard navigation hook
   useKeyboardNavigation();
+
+  // Initialize contextual search results listener
+  useContextResults();
 
   useEffect(() => {
     // Diagnostic ping on mount

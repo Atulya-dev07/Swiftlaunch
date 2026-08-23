@@ -576,6 +576,12 @@ html, body {
   background: rgba(56, 189, 248, 0.15);
 }
 
+.badge-context {
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.15);
+  border-color: rgba(167, 139, 250, 0.3);
+}
+
 .item-actions-hint {
   display: flex;
   align-items: center;

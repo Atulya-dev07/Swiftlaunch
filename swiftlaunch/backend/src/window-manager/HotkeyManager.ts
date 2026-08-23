@@ -24,6 +24,7 @@ export class HotkeyManager {
   private currentHotkey: string;
   private windowRef: (() => BrowserWindow | null) | null = null;
   private createWindowFn: (() => void) | null = null;
+  private onBeforeShowFn: (() => void | Promise<void>) | null = null;
 
   constructor(hotkey: string = 'Alt+Space') {
     this.currentHotkey = hotkey;
@@ -36,6 +37,11 @@ export class HotkeyManager {
   ): void {
     this.windowRef = getWindow;
     this.createWindowFn = createWindow;
+  }
+
+  /** Set optional hook to run before the window is displayed (e.g. background screen scan). */
+  setOnBeforeShow(cb: () => void | Promise<void>): void {
+    this.onBeforeShowFn = cb;
   }
 
   /** Register the global hotkey(s). Returns true on success. */
@@ -105,6 +111,18 @@ export class HotkeyManager {
     if (win.isVisible() && !win.isMinimized()) {
       win.hide();
     } else {
+      // Fire-and-forget scan before overlay is shown
+      try {
+        const promise = this.onBeforeShowFn?.();
+        if (promise && typeof promise.catch === 'function') {
+          promise.catch((err) => {
+            console.error('[HotkeyManager] Context scan error:', err);
+          });
+        }
+      } catch (err) {
+        console.error('[HotkeyManager] Error calling onBeforeShow:', err);
+      }
+
       if (win.isMinimized()) {
         win.restore();
       }

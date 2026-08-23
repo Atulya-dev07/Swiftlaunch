@@ -87,6 +87,15 @@ export class AppProvider implements Provider {
     await shell.openPath(lnkPath);
   }
 
+  /** Get all scanned applications for indexing and external providers. */
+  getApplications(): { id: string; name: string; lnkPath: string }[] {
+    return this.cache.map((app) => ({
+      id: `app:${app.lnkPath}`,
+      name: app.name,
+      lnkPath: app.lnkPath
+    }));
+  }
+
   private async scanApplications(): Promise<void> {
     const entries: AppEntry[] = [];
     for (const startMenuDir of this.startMenuPaths) {

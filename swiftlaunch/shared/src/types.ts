@@ -64,4 +64,5 @@ export interface SwiftLaunchApi {
   getClipboardHistory: () => Promise<ClipboardEntry[]>;
   snapWindow: (direction: string) => Promise<void>;
   onProviderWarning: (callback: (message: string) => void) => () => void;
+  onContextResultsUpdated: (callback: (results: Result[]) => void) => () => void;
 }

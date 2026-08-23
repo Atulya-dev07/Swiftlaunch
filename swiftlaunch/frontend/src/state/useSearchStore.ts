@@ -8,6 +8,7 @@ export interface GroupedResults {
 interface SearchState {
   query: string;
   results: Result[];
+  contextResults: Result[];
   groupedResults: GroupedResults;
   flatResults: Result[];
   selectedIndex: number;
@@ -20,6 +21,7 @@ interface SearchState {
 
   setQuery: (query: string) => void;
   setResults: (results: Result[]) => void;
+  setContextResults: (contextResults: Result[]) => void;
   setSelectedIndex: (index: number | ((prev: number) => number)) => void;
   setIsLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
@@ -43,11 +45,14 @@ export function normalizeProvider(providerId?: string, resultId?: string): strin
 export function groupResults(
   results: Result[],
   activeGroup: string | null,
-  query?: string
+  query?: string,
+  contextResults: Result[] = []
 ): { grouped: GroupedResults; flat: Result[] } {
   const isFileScope = query ? /^#(files?|file)\b/i.test(query.trim()) : false;
+  const isContextScope = query ? /^#(ctx|context)\b/i.test(query.trim()) : false;
 
   const categories: Record<string, string> = {
+    context: 'ON YOUR SCREEN',
     app: 'Applications',
     file: isFileScope ? 'Files' : 'Files & Folders',
     calc: 'Calculator',
@@ -58,6 +63,25 @@ export function groupResults(
 
   const grouped: GroupedResults = {};
   const flat: Result[] = [];
+
+  // When activeGroup is 'context' or scoped to #context, exclusively render context results
+  if (activeGroup === 'context' || isContextScope) {
+    if (contextResults.length > 0) {
+      grouped['ON YOUR SCREEN'] = [...contextResults];
+      flat.push(...contextResults);
+    }
+    return { grouped, flat };
+  }
+
+  // When query is empty (or starts with ctx:) and activeGroup is null / 'all', include context results at top
+  const showContext =
+    (!query || query.trim().length === 0 || query.trim().startsWith('ctx:')) &&
+    (activeGroup === null || activeGroup === 'all') &&
+    contextResults.length > 0;
+
+  if (showContext) {
+    grouped['ON YOUR SCREEN'] = [...contextResults];
+  }
 
   for (const item of results) {
     const normalizedProvider = normalizeProvider(item.providerId, item.id);
@@ -83,6 +107,7 @@ export function groupResults(
   const categoryOrder = isFileScope
     ? ['Files', 'Files & Folders']
     : [
+        'ON YOUR SCREEN',
         'Applications',
         'Files & Folders',
         'Files',
@@ -105,6 +130,7 @@ export function groupResults(
 export const useSearchStore = create<SearchState>((set) => ({
   query: '',
   results: [],
+  contextResults: [],
   groupedResults: {},
   flatResults: [],
   selectedIndex: 0,
@@ -118,7 +144,7 @@ export const useSearchStore = create<SearchState>((set) => ({
 
   setQuery: (query: string) => {
     set((state) => {
-      const { grouped, flat } = groupResults(state.results, state.activeGroup, query);
+      const { grouped, flat } = groupResults(state.results, state.activeGroup, query, state.contextResults);
       return { query, groupedResults: grouped, flatResults: flat };
     });
   },
@@ -126,7 +152,7 @@ export const useSearchStore = create<SearchState>((set) => ({
 
   setResults: (results: Result[]) => {
     set((state) => {
-      const { grouped, flat } = groupResults(results, state.activeGroup, state.query);
+      const { grouped, flat } = groupResults(results, state.activeGroup, state.query, state.contextResults);
 
       // Group counts by providerId for structured boundary logging
       const byProvider: Record<string, number> = {};
@@ -141,6 +167,18 @@ export const useSearchStore = create<SearchState>((set) => ({
         groupedResults: grouped,
         flatResults: flat,
         selectedIndex: 0
+      };
+    });
+  },
+
+  setContextResults: (contextResults: Result[]) => {
+    set((state) => {
+      const { grouped, flat } = groupResults(state.results, state.activeGroup, state.query, contextResults);
+      console.log(`[useSearchStore] Updated contextResults with ${contextResults.length} item(s)`);
+      return {
+        contextResults,
+        groupedResults: grouped,
+        flatResults: flat
       };
     });
   },
@@ -160,7 +198,7 @@ export const useSearchStore = create<SearchState>((set) => ({
 
   setActiveGroup: (activeGroup: string | null) => {
     set((state) => {
-      const { grouped, flat } = groupResults(state.results, activeGroup, state.query);
+      const { grouped, flat } = groupResults(state.results, activeGroup, state.query, state.contextResults);
       return {
         activeGroup,
         groupedResults: grouped,
@@ -214,6 +252,7 @@ export const useSearchStore = create<SearchState>((set) => ({
     set({
       query: '',
       results: [],
+      contextResults: [],
       groupedResults: {},
       flatResults: [],
       selectedIndex: 0,

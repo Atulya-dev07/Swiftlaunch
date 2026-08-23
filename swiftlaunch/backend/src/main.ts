@@ -9,6 +9,7 @@ import { AppProvider } from './providers/AppProvider.js';
 import { CalculatorProvider } from './providers/CalculatorProvider.js';
 import { FileProvider } from './providers/FileProvider.js';
 import { ClipboardProvider } from './providers/ClipboardProvider.js';
+import { ContextProvider } from './providers/ContextProvider.js';
 
 // Database
 import { initDatabase, closeDatabase } from './db/schema.js';
@@ -16,6 +17,7 @@ import { DbQueries } from './db/queries.js';
 
 // IPC
 import { registerIpcHandlers } from './ipc/handlers.js';
+import { IPC_CHANNELS } from '@swiftlaunch/shared';
 
 // Window Manager
 import { HotkeyManager } from './window-manager/HotkeyManager.js';
@@ -92,6 +94,7 @@ app.whenReady().then(async () => {
   const calculatorProvider = new CalculatorProvider();
   const fileProvider = new FileProvider();
   const clipboardProvider = new ClipboardProvider();
+  const contextProvider = new ContextProvider(dbQueries, appProvider, fileProvider);
 
   // Wire clipboard persistence to DB
   clipboardProvider.setDbCallback((entry) => {
@@ -101,7 +104,14 @@ app.whenReady().then(async () => {
   // Wire file provider warning callback
   fileProvider.setWarningCallback((msg) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('PROVIDER_WARNING', msg);
+      mainWindow.webContents.send(IPC_CHANNELS.PROVIDER_WARNING, msg);
+    }
+  });
+
+  // Wire context provider results callback
+  contextProvider.setUpdateCallback((results) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(IPC_CHANNELS.CONTEXT_RESULTS_UPDATED, results);
     }
   });
 
@@ -109,6 +119,7 @@ app.whenReady().then(async () => {
   registry.register(calculatorProvider);
   registry.register(fileProvider);
   registry.register(clipboardProvider);
+  registry.register(contextProvider);
 
   // ── 3. Initialize Plugin Host & Window Snapper ───────────────────
   const pluginDir = path.join(app.getPath('userData'), 'plugins');
@@ -137,6 +148,16 @@ app.whenReady().then(async () => {
     () => mainWindow,
     () => createWindow()
   );
+  hotkeyManager.setOnBeforeShow(async () => {
+    try {
+      const results = await contextProvider.refreshContext();
+      if (mainWindow && !mainWindow.isDestroyed() && results) {
+        mainWindow.webContents.send(IPC_CHANNELS.CONTEXT_RESULTS_UPDATED, results);
+      }
+    } catch (err) {
+      console.error('[Main] Context scan error on hotkey:', err);
+    }
+  });
   hotkeyManager.register();
 
   app.on('activate', () => {

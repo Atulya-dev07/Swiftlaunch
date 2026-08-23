@@ -9,6 +9,7 @@ interface ModeTab {
 
 const TABS: ModeTab[] = [
   { id: null, label: 'All', iconName: 'auto_awesome' },
+  { id: 'context', label: 'Context', iconName: 'screen_search_desktop' },
   { id: 'app', label: 'Apps', iconName: 'apps' },
   { id: 'file', label: 'Files', iconName: 'folder_open' },
   { id: 'calc', label: 'Math', iconName: 'calculate' },

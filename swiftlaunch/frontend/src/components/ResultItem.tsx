@@ -25,6 +25,8 @@ export const ResultItem: React.FC<ResultItemProps> = ({
 
   const getProviderBadgeLabel = (p: string): string => {
     switch (p) {
+      case 'context':
+        return 'Context';
       case 'app':
         return 'App';
       case 'file':
@@ -50,6 +52,8 @@ export const ResultItem: React.FC<ResultItemProps> = ({
     if (ext === 'zip' || ext === 'rar' || ext === '7z') return 'folder_zip';
 
     switch (p) {
+      case 'context':
+        return 'screen_search_desktop';
       case 'app':
         return 'apps';
       case 'file':

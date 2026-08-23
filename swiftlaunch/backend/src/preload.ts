@@ -39,5 +39,16 @@ contextBridge.exposeInMainWorld('api', {
     return () => {
       ipcRenderer.removeListener(IPC_CHANNELS.PROVIDER_WARNING, listener);
     };
+  },
+
+  // Listen for contextual search results updates (returns unsubscribe function)
+  onContextResultsUpdated: (callback: (results: Result[]) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, results: Result[]) => {
+      callback(results);
+    };
+    ipcRenderer.on(IPC_CHANNELS.CONTEXT_RESULTS_UPDATED, listener);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.CONTEXT_RESULTS_UPDATED, listener);
+    };
   }
 });

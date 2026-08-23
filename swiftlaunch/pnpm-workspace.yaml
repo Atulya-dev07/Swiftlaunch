@@ -10,3 +10,4 @@ allowBuilds:
   ffi-napi: false
   lzma-native: true
   ref-napi: true
+  tesseract.js: true

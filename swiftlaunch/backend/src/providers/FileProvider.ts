@@ -303,7 +303,49 @@ export class FileProvider implements Provider {
     return null;
   }
 
-  private getFileIcon(filePath: string): string {
+  /**
+   * Get common/recent indexable files from Desktop, Documents, and Downloads.
+   */
+  getIndexableFiles(): { id: string; label: string; path: string }[] {
+    const homedir = process.env['USERPROFILE'] || process.env['HOME'] || '';
+    if (!homedir) return [];
+
+    const dirs = [
+      path.join(homedir, 'Desktop'),
+      path.join(homedir, 'Documents'),
+      path.join(homedir, 'Downloads')
+    ];
+
+    const results: { id: string; label: string; path: string }[] = [];
+    const seen = new Set<string>();
+
+    for (const dir of dirs) {
+      if (!fs.existsSync(dir)) continue;
+      try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.name.startsWith('.')) continue;
+          const fullPath = path.join(dir, entry.name);
+          if (seen.has(fullPath.toLowerCase())) continue;
+          seen.add(fullPath.toLowerCase());
+
+          results.push({
+            id: `file:${fullPath}`,
+            label: entry.name,
+            path: fullPath
+          });
+
+          if (results.length >= 100) break;
+        }
+      } catch {
+        // Ignore unreadable dirs
+      }
+    }
+
+    return results;
+  }
+
+  getFileIcon(filePath: string): string {
     const ext = path.extname(filePath).toLowerCase();
     const iconMap: Record<string, string> = {
       '.exe': '⚙️',

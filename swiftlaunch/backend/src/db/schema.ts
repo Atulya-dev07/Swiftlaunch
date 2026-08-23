@@ -10,10 +10,28 @@ import path from 'path';
 import fs from 'fs';
 import type { ClipboardEntry, QuickLink, UsageRecord } from '@swiftlaunch/shared';
 
+export interface ItemEmbeddingRecord {
+  item_id: string;
+  item_type: 'app' | 'file' | string;
+  label: string;
+  embedding: string; // Base64 encoded or string representation of Buffer BLOB
+  updated_at: number;
+}
+
+export interface ContextScanCacheRecord {
+  id: number; // 1
+  ocr_text: string;
+  query_embedding: string; // Base64 encoded or string representation of Buffer BLOB
+  scanned_at: number;
+}
+
 export interface SwiftLaunchDbData {
   usage_frequency: UsageRecord[];
   clipboard_history: ClipboardEntry[];
   quicklinks: QuickLink[];
+  settings: Record<string, any>;
+  item_embeddings: ItemEmbeddingRecord[];
+  context_scan_cache: ContextScanCacheRecord[];
 }
 
 export class PureJsDatabase {
@@ -66,7 +84,10 @@ export class PureJsDatabase {
         return {
           usage_frequency: parsed.usage_frequency || [],
           clipboard_history: parsed.clipboard_history || [],
-          quicklinks: parsed.quicklinks || []
+          quicklinks: parsed.quicklinks || [],
+          settings: Object.assign({ context_scan_enabled: true }, parsed.settings || {}),
+          item_embeddings: parsed.item_embeddings || [],
+          context_scan_cache: parsed.context_scan_cache || []
         };
       }
     } catch (err) {
@@ -75,7 +96,10 @@ export class PureJsDatabase {
     return {
       usage_frequency: [],
       clipboard_history: [],
-      quicklinks: []
+      quicklinks: [],
+      settings: { context_scan_enabled: true },
+      item_embeddings: [],
+      context_scan_cache: []
     };
   }
 }

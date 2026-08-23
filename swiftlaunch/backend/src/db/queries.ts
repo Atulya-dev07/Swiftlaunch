@@ -6,7 +6,7 @@
  * Adapted to compute boost scores from usage_frequency data.
  */
 
-import type { PureJsDatabase } from './schema.js';
+import type { PureJsDatabase, ItemEmbeddingRecord, ContextScanCacheRecord } from './schema.js';
 import type { ClipboardEntry, QuickLink } from '@swiftlaunch/shared';
 
 export class DbQueries {
@@ -115,6 +115,99 @@ export class DbQueries {
   removeQuickLink(alias: string): void {
     const data = this.db.Data;
     data.quicklinks = data.quicklinks.filter((q) => q.alias !== alias);
+    this.db.scheduleSave();
+  }
+
+  // ── Settings ─────────────────────────────────────────────────────
+
+  /** Get a setting value by key with fallback default. */
+  getSetting<T>(key: string, defaultValue: T): T {
+    const settings = this.db.Data.settings || {};
+    return key in settings ? (settings[key] as T) : defaultValue;
+  }
+
+  /** Set a setting key-value pair. */
+  setSetting(key: string, value: any): void {
+    if (!this.db.Data.settings) {
+      this.db.Data.settings = {};
+    }
+    this.db.Data.settings[key] = value;
+    this.db.scheduleSave();
+  }
+
+  /** Check if context scan is enabled (defaults to true). */
+  isContextScanEnabled(): boolean {
+    return this.getSetting<boolean>('context_scan_enabled', true);
+  }
+
+  // ── Item Embeddings ──────────────────────────────────────────────
+
+  /** Get a cached embedding for an item by its ID. */
+  getItemEmbedding(itemId: string): ItemEmbeddingRecord | undefined {
+    const embeddings = this.db.Data.item_embeddings || [];
+    return embeddings.find((e) => e.item_id === itemId);
+  }
+
+  /** Get all cached item embeddings. */
+  getAllItemEmbeddings(): ItemEmbeddingRecord[] {
+    return [...(this.db.Data.item_embeddings || [])];
+  }
+
+  /** Insert or update an item embedding record. */
+  upsertItemEmbedding(record: ItemEmbeddingRecord): void {
+    if (!this.db.Data.item_embeddings) {
+      this.db.Data.item_embeddings = [];
+    }
+    const idx = this.db.Data.item_embeddings.findIndex((e) => e.item_id === record.item_id);
+    if (idx >= 0) {
+      this.db.Data.item_embeddings[idx] = record;
+    } else {
+      this.db.Data.item_embeddings.push(record);
+    }
+    this.db.scheduleSave();
+  }
+
+  /** Bulk upsert item embedding records. */
+  upsertItemEmbeddings(records: ItemEmbeddingRecord[]): void {
+    if (!this.db.Data.item_embeddings) {
+      this.db.Data.item_embeddings = [];
+    }
+    for (const record of records) {
+      const idx = this.db.Data.item_embeddings.findIndex((e) => e.item_id === record.item_id);
+      if (idx >= 0) {
+        this.db.Data.item_embeddings[idx] = record;
+      } else {
+        this.db.Data.item_embeddings.push(record);
+      }
+    }
+    this.db.scheduleSave();
+  }
+
+  // ── Context Scan Cache ───────────────────────────────────────────
+
+  /** Get the singleton last scan result. */
+  getContextScanCache(): ContextScanCacheRecord | undefined {
+    const cache = this.db.Data.context_scan_cache || [];
+    return cache.find((c) => c.id === 1);
+  }
+
+  /** Save the singleton last scan result. */
+  saveContextScanCache(ocrText: string, queryEmbedding: string): void {
+    const record: ContextScanCacheRecord = {
+      id: 1,
+      ocr_text: ocrText,
+      query_embedding: queryEmbedding,
+      scanned_at: Date.now()
+    };
+    if (!this.db.Data.context_scan_cache) {
+      this.db.Data.context_scan_cache = [];
+    }
+    const idx = this.db.Data.context_scan_cache.findIndex((c) => c.id === 1);
+    if (idx >= 0) {
+      this.db.Data.context_scan_cache[idx] = record;
+    } else {
+      this.db.Data.context_scan_cache.push(record);
+    }
     this.db.scheduleSave();
   }
 }
