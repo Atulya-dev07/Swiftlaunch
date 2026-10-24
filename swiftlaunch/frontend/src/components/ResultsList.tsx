@@ -1,13 +1,12 @@
 import React, { useRef, useEffect } from 'react';
 import { useSearchStore } from '../state/useSearchStore.js';
 import { ResultItem } from './ResultItem.js';
-import { SectionHeader } from './SectionHeader.js';
 import { EmptyState } from './EmptyState.js';
 import { LoadingState } from './LoadingState.js';
 
 export const ResultsList: React.FC = () => {
-  const groupedResults = useSearchStore((state) => state.groupedResults);
   const flatResults = useSearchStore((state) => state.flatResults);
+  const query = useSearchStore((state) => state.query);
   const selectedIndex = useSearchStore((state) => state.selectedIndex);
   const setSelectedIndex = useSearchStore((state) => state.setSelectedIndex);
   const isLoading = useSearchStore((state) => state.isLoading);
@@ -32,51 +31,39 @@ export const ResultsList: React.FC = () => {
 
   if (error && flatResults.length === 0) {
     return (
-      <div className="search-error-state" role="alert" style={{ padding: '32px 16px', textAlign: 'center', color: '#ef4444' }}>
-        <div style={{ fontSize: '28px', marginBottom: '8px' }}>⚠️</div>
-        <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '4px' }}>{error}</div>
-        <div style={{ fontSize: '12px', opacity: 0.8 }}>Please check Electron preload and IPC configuration.</div>
+      <div className="search-error-state" role="alert">
+        <div style={{ fontSize: '20px', marginBottom: '4px' }}>⚠️</div>
+        <div style={{ fontWeight: 500, fontSize: '13px', color: '#f87171' }}>{error}</div>
       </div>
     );
   }
 
   if (flatResults.length === 0) {
+    if (!query || query.trim().length === 0) {
+      return null;
+    }
     return <EmptyState />;
   }
 
-  let globalIndexCounter = 0;
-
   return (
-    <div className="results-list-container" ref={containerRef}>
-      {Object.entries(groupedResults).map(([categoryName, items]) => {
-        if (!items || items.length === 0) return null;
+    <div className="results-list-container" ref={containerRef} role="listbox">
+      {flatResults.map((item, index) => {
+        const isSelected = index === selectedIndex;
 
         return (
-          <div key={categoryName} className="result-category-group">
-            <SectionHeader title={categoryName} count={items.length} />
-            <div className="category-items-list">
-              {items.map((item) => {
-                const currentIndex = globalIndexCounter++;
-                const isSelected = currentIndex === selectedIndex;
-
-                return (
-                  <div
-                    key={item.id}
-                    ref={(el) => {
-                      if (el) itemRefs.current.set(currentIndex, el);
-                      else itemRefs.current.delete(currentIndex);
-                    }}
-                  >
-                    <ResultItem
-                      result={item}
-                      isSelected={isSelected}
-                      itemIndex={currentIndex}
-                      onClick={() => setSelectedIndex(currentIndex)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+          <div
+            key={item.id}
+            ref={(el) => {
+              if (el) itemRefs.current.set(index, el);
+              else itemRefs.current.delete(index);
+            }}
+          >
+            <ResultItem
+              result={item}
+              isSelected={isSelected}
+              itemIndex={index}
+              onClick={() => setSelectedIndex(index)}
+            />
           </div>
         );
       })}

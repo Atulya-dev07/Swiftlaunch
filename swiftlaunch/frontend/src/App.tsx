@@ -10,7 +10,6 @@ import { SearchBar } from './components/SearchBar.js';
 import { ResultsList } from './components/ResultsList.js';
 import { DetailPane } from './components/DetailPane.js';
 import { ActionPanel } from './components/ActionPanel.js';
-import { FooterHints } from './components/FooterHints.js';
 import { SettingsPage } from './components/SettingsPage.js';
 import './index.css';
 
@@ -19,6 +18,8 @@ setupMockApi();
 
 export const App: React.FC = () => {
   const theme = useUiStore((state) => state.theme);
+  const query = useSearchStore((state) => state.query);
+  const flatResults = useSearchStore((state) => state.flatResults);
   const detailPaneOpen = useSearchStore((state) => state.detailPaneOpen);
   const actionPanelOpen = useSearchStore((state) => state.actionPanelOpen);
   const providerWarning = useSearchStore((state) => state.providerWarning);
@@ -69,20 +70,28 @@ export const App: React.FC = () => {
     };
   }, [setProviderWarning]);
 
-  // Handle global Esc for Settings dialog
+  // Handle global Esc for Settings dialog and Ctrl+, shortcut
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && settingsOpen) {
         e.preventDefault();
         setSettingsOpen(false);
+      } else if (e.ctrlKey && e.key === ',') {
+        e.preventDefault();
+        setSettingsOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [settingsOpen]);
 
+  const hasActiveResults = query.trim().length > 0 || flatResults.length > 0;
+
   return (
-    <div className="launcher-window" data-theme={theme}>
+    <div
+      className={`launcher-window ${hasActiveResults ? 'has-results' : 'is-idle'}`}
+      data-theme={theme}
+    >
       <SearchBar onOpenSettings={() => setSettingsOpen(true)} />
 
       {providerWarning && (
@@ -102,15 +111,15 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      <div className="launcher-content-area">
-        <ResultsList />
+      {hasActiveResults && (
+        <div className="launcher-content-area">
+          <ResultsList />
 
-        {detailPaneOpen && !actionPanelOpen && <DetailPane />}
+          {detailPaneOpen && !actionPanelOpen && <DetailPane />}
 
-        {actionPanelOpen && <ActionPanel />}
-      </div>
-
-      <FooterHints />
+          {actionPanelOpen && <ActionPanel />}
+        </div>
+      )}
 
       {settingsOpen && <SettingsPage onClose={() => setSettingsOpen(false)} />}
     </div>
