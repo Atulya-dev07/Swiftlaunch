@@ -52,6 +52,7 @@ export function groupResults(
   const isContextScope = query ? /^#(ctx|context)\b/i.test(query.trim()) : false;
 
   const categories: Record<string, string> = {
+    combo: 'App Combos',
     context: 'ON YOUR SCREEN',
     app: 'Applications',
     file: isFileScope ? 'Files' : 'Files & Folders',
@@ -107,6 +108,7 @@ export function groupResults(
   const categoryOrder = isFileScope
     ? ['Files', 'Files & Folders']
     : [
+        'App Combos',
         'ON YOUR SCREEN',
         'Applications',
         'Files & Folders',

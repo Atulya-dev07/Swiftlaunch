@@ -35,7 +35,18 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onOpenSettings }) => {
       }}
     >
       <div className="search-input-pill">
-        <div className="search-icon-box">
+        <div className="search-drag-grip" title="Click and drag to move search bar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="8" cy="6" r="2" />
+            <circle cx="16" cy="6" r="2" />
+            <circle cx="8" cy="12" r="2" />
+            <circle cx="16" cy="12" r="2" />
+            <circle cx="8" cy="18" r="2" />
+            <circle cx="16" cy="18" r="2" />
+          </svg>
+        </div>
+
+        <div className="search-icon-box" title="Click and drag to move search bar">
           {isLoading ? (
             <span className="material-symbols-outlined animate-spin" style={{ fontSize: '18px' }}>
               progress_activity
@@ -43,8 +54,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onOpenSettings }) => {
           ) : (
             <svg
               className="search-lens-svg"
-              width="18"
-              height="18"
+              width="17"
+              height="17"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"

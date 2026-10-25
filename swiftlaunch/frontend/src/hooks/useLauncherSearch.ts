@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useSearchStore } from '../state/useSearchStore.js';
+import { useComboStore } from '../state/useComboStore.js';
 import type { Result } from '@swiftlaunch/shared';
 
 export function useLauncherSearch(debounceMs = 150) {
@@ -61,9 +62,11 @@ export function useLauncherSearch(debounceMs = 150) {
           console.log(`[useLauncherSearch] Query sent through IPC: "${trimmed}"`);
           const results = await window.api.search(trimmed);
           console.log(`[useLauncherSearch] Raw response received from IPC: ${results?.length ?? 0} item(s)`);
+          const comboResults = useComboStore.getState().getComboSearchResults(trimmed);
+          const merged = [...comboResults, ...(results || [])];
           // Check for stale response
           if (searchSeq.current === currentSeq) {
-            setResults(results || []);
+            setResults(merged);
           }
         } else {
           if (searchSeq.current === currentSeq) {

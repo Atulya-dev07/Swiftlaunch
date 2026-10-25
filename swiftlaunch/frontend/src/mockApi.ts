@@ -1,6 +1,14 @@
-import type { Result, ClipboardEntry } from '@swiftlaunch/shared';
+import type { Result, ClipboardEntry, InstalledApp } from '@swiftlaunch/shared';
 
 const MOCK_RESULTS: Result[] = [
+  {
+    id: 'app:c:/Users/User/AppData/Local/Programs/Antigravity/antigravity.exe',
+    providerId: 'app',
+    icon: '🔮',
+    title: 'Antigravity',
+    subtitle: 'C:\\Users\\User\\AppData\\Local\\Programs\\Antigravity\\antigravity.exe',
+    score: 98
+  },
   {
     id: 'app:c:/Windows/System32/notepad.exe',
     providerId: 'app',
@@ -229,6 +237,60 @@ export function setupMockApi(): void {
         clearTimeout(timer);
         console.log('[Mock API] Unsubscribed onContextResultsUpdated listener');
       };
+    },
+
+    getAllApps: async (): Promise<InstalledApp[]> => {
+      return [
+        {
+          id: 'app:c:/Users/User/AppData/Local/Programs/Antigravity/antigravity.exe',
+          name: 'Antigravity',
+          lnkPath: 'C:\\Users\\User\\AppData\\Local\\Programs\\Antigravity\\antigravity.exe'
+        },
+        {
+          id: 'app:c:/Program Files/Google/Chrome/Application/chrome.exe',
+          name: 'Google Chrome',
+          lnkPath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+        },
+        {
+          id: 'app:c:/Users/User/AppData/Local/Programs/Microsoft VS Code/Code.exe',
+          name: 'Visual Studio Code',
+          lnkPath: 'C:\\Users\\User\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe'
+        },
+        {
+          id: 'app:c:/Windows/System32/notepad.exe',
+          name: 'Notepad',
+          lnkPath: 'C:\\Windows\\System32\\notepad.exe'
+        },
+        {
+          id: 'app:c:/Windows/System32/calc.exe',
+          name: 'Calculator',
+          lnkPath: 'C:\\Windows\\System32\\calc.exe'
+        },
+        {
+          id: 'app:c:/Windows/System32/cmd.exe',
+          name: 'Command Prompt',
+          lnkPath: 'C:\\Windows\\System32\\cmd.exe'
+        },
+        {
+          id: 'app:c:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe',
+          name: 'PowerShell',
+          lnkPath: 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'
+        },
+        {
+          id: 'app:c:/Users/User/AppData/Local/Discord/Discord.exe',
+          name: 'Discord',
+          lnkPath: 'C:\\Users\\User\\AppData\\Local\\Discord\\Discord.exe'
+        },
+        {
+          id: 'app:c:/Users/User/AppData/Roaming/Spotify/Spotify.exe',
+          name: 'Spotify',
+          lnkPath: 'C:\\Users\\User\\AppData\\Roaming\\Spotify\\Spotify.exe'
+        }
+      ];
+    },
+
+    launchAppGroup: async (appIds: string[]): Promise<void> => {
+      console.log(`[Mock API] launchAppGroup triggered for ${appIds.length} app(s):`, appIds);
     }
   };
 }

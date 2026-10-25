@@ -55,6 +55,23 @@ export interface UsageRecord {
   timestamp: number;
 }
 
+export interface InstalledApp {
+  id: string;
+  name: string;
+  lnkPath?: string;
+  icon?: string;
+}
+
+export interface AppCombo {
+  id: string;
+  name: string;
+  icon?: string;
+  color?: string;
+  appIds: string[];
+  appNames: string[];
+  createdAt: number;
+}
+
 export interface SwiftLaunchApi {
   ping: () => Promise<string>;
   hideWindow: () => void;
@@ -65,4 +82,6 @@ export interface SwiftLaunchApi {
   snapWindow: (direction: string) => Promise<void>;
   onProviderWarning: (callback: (message: string) => void) => () => void;
   onContextResultsUpdated: (callback: (results: Result[]) => void) => () => void;
+  getAllApps?: () => Promise<InstalledApp[]>;
+  launchAppGroup?: (appIds: string[]) => Promise<void>;
 }

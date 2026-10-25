@@ -50,5 +50,12 @@ contextBridge.exposeInMainWorld('api', {
     return () => {
       ipcRenderer.removeListener(IPC_CHANNELS.CONTEXT_RESULTS_UPDATED, listener);
     };
-  }
+  },
+
+  // Get all installed applications
+  getAllApps: () => ipcRenderer.invoke(IPC_CHANNELS.GET_ALL_APPS),
+
+  // Launch group of applications together
+  launchAppGroup: (appIds: string[]): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.LAUNCH_APP_GROUP, appIds)
 });

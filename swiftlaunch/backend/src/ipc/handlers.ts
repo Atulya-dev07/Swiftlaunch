@@ -9,6 +9,7 @@ import { ipcMain, clipboard, shell, BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '@swiftlaunch/shared';
 import type { Result } from '@swiftlaunch/shared';
 import type { ProviderRegistry } from '../providers/ProviderRegistry.js';
+import type { AppProvider } from '../providers/AppProvider.js';
 import type { ClipboardProvider } from '../providers/ClipboardProvider.js';
 import type { DbQueries } from '../db/queries.js';
 import type { PluginLoader } from '../plugin-host/PluginLoader.js';
@@ -154,6 +155,42 @@ export function registerIpcHandlers(deps: HandlerDependencies): void {
   // ── Window snapping ─────────────────────────────────────────────
   ipcMain.handle(IPC_CHANNELS.SNAP_WINDOW, async (_event, direction: SnapDirection) => {
     await windowSnapper.snap(direction);
+  });
+
+  // ── Get all installed apps ──────────────────────────────────────
+  ipcMain.handle(IPC_CHANNELS.GET_ALL_APPS, () => {
+    const appProvider = registry.getProvider('AppProvider') as AppProvider | undefined;
+    if (appProvider && typeof appProvider.getApplications === 'function') {
+      return appProvider.getApplications();
+    }
+    return [];
+  });
+
+  // ── Launch group of apps together ───────────────────────────────
+  ipcMain.handle(IPC_CHANNELS.LAUNCH_APP_GROUP, async (_event, appIds: string[]) => {
+    if (!Array.isArray(appIds) || appIds.length === 0) return;
+    console.log(`[IPC:LAUNCH_APP_GROUP] Launching ${appIds.length} apps together:`, appIds);
+
+    for (const appId of appIds) {
+      try {
+        if (appId.startsWith('app:')) {
+          const lnkPath = appId.replace('app:', '');
+          await shell.openPath(lnkPath);
+        } else if (appId.startsWith('file:')) {
+          const filePath = appId.replace('file:', '');
+          await shell.openPath(filePath);
+        } else {
+          for (const provider of registry.getAllProviders()) {
+            if (appId.startsWith(provider.id.replace('Provider', '').toLowerCase() + ':')) {
+              await provider.executeAction?.(appId);
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        console.error(`[IPC:LAUNCH_APP_GROUP] Failed to launch ${appId}:`, err);
+      }
+    }
   });
 
   console.log('[IPC] All handlers registered');

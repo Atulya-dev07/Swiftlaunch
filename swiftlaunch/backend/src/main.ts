@@ -49,8 +49,8 @@ function getPreloadPath(): string {
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 600,
-    height: 400,
+    width: 620,
+    height: 520,
     frame: false,
     transparent: true,
     alwaysOnTop: true,

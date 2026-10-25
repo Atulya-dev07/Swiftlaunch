@@ -98,6 +98,59 @@ export const ClipIcon: React.FC = () => (
   </svg>
 );
 
+export const AntigravityIcon: React.FC = () => (
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="28" height="28" rx="6" fill="#18132B" />
+    <circle cx="14" cy="14" r="8" stroke="url(#ag-grad)" strokeWidth="1.8" strokeDasharray="3 2" />
+    <circle cx="14" cy="14" r="4.2" fill="url(#ag-core)" />
+    <circle cx="14" cy="7" r="1.8" fill="#A855F7" />
+    <defs>
+      <linearGradient id="ag-grad" x1="6" y1="6" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#818CF8" />
+        <stop offset="1" stopColor="#C084FC" />
+      </linearGradient>
+      <linearGradient id="ag-core" x1="10" y1="10" x2="18" y2="18" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#6366F1" />
+        <stop offset="1" stopColor="#EC4899" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+export const ChromeIcon: React.FC = () => (
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="28" height="28" rx="6" fill="#1C212B" />
+    <circle cx="14" cy="14" r="9" fill="#1F2937" />
+    <circle cx="14" cy="14" r="4" fill="#3B82F6" />
+    <path d="M14 5C17.2 5 20 6.8 21.5 9.5L14 14H5.3C6.3 8.8 10.7 5 14 5Z" fill="#EF4444" opacity="0.9" />
+    <path d="M21.5 9.5C22.5 11.2 23 13.1 23 15C23 19.5 19.6 23 15.1 23L11.5 16.8L14 14L21.5 9.5Z" fill="#10B981" opacity="0.9" />
+    <path d="M5.3 14H14L11.5 16.8L6.8 21.5C5.7 19.6 5 17.4 5 15C5 14.6 5.1 14.3 5.3 14Z" fill="#F59E0B" opacity="0.9" />
+    <circle cx="14" cy="14" r="3.2" fill="#FFFFFF" />
+  </svg>
+);
+
+export const VsCodeIcon: React.FC = () => (
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="28" height="28" rx="6" fill="#171C26" />
+    <path d="M21 7.2L17.5 5.5L7.8 12.8L5 10.7L4 11.4V16.6L5 17.3L7.8 15.2L17.5 22.5L21 20.8V7.2Z" fill="#007ACC" />
+    <path d="M17.5 5.5L11.2 12.5L17.5 17.5V5.5Z" fill="#1F9CF0" />
+    <path d="M17.5 10.5L11.2 15.5L17.5 22.5V10.5Z" fill="#0065A9" />
+  </svg>
+);
+
+export const ComboIcon: React.FC = () => (
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="28" height="28" rx="6" fill="#181E2E" />
+    {/* Interlocking app layers */}
+    <rect x="6" y="6" width="10" height="10" rx="3" fill="#6366F1" opacity="0.9" />
+    <rect x="12" y="12" width="10" height="10" rx="3" fill="#EC4899" opacity="0.9" />
+    <circle cx="11" cy="11" r="2" fill="#FFFFFF" opacity="0.9" />
+    <circle cx="17" cy="17" r="2" fill="#FFFFFF" opacity="0.9" />
+    {/* Plus spark */}
+    <path d="M20 5V8M18.5 6.5H21.5" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
 interface ResultIconProps {
   title: string;
   providerId: string;
@@ -111,6 +164,26 @@ export const ResultIcon: React.FC<ResultIconProps> = ({ title, providerId, rawIc
 
   const t = title.toLowerCase();
   const ext = title.includes('.') ? title.split('.').pop()?.toLowerCase() : '';
+
+  // Combos / App Clubs
+  if (providerId === 'combo' || providerId === 'appcombo' || t.startsWith('combo:') || t.includes('[combo]')) {
+    return <ComboIcon />;
+  }
+
+  // Antigravity
+  if (t.includes('antigravity')) {
+    return <AntigravityIcon />;
+  }
+
+  // Google Chrome
+  if (t.includes('chrome')) {
+    return <ChromeIcon />;
+  }
+
+  // Visual Studio Code
+  if (t.includes('vs code') || t.includes('visual studio code') || t.includes('code.exe')) {
+    return <VsCodeIcon />;
+  }
 
   // Aimlabs brand icon
   if (t.includes('aimlabs')) {

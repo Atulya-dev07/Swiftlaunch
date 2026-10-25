@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useSearchStore } from '../state/useSearchStore.js';
+import { useComboStore } from '../state/useComboStore.js';
 import type { Result } from '@swiftlaunch/shared';
 
 export interface ResultAction {
@@ -20,6 +21,11 @@ export function useResultActions() {
     const providerId = result.providerId || result.id.split(':')[0] || 'other';
 
     switch (providerId) {
+      case 'combo':
+        return [
+          { id: 'launch_combo', label: 'Launch All Apps in Combo', shortcut: '↵', icon: '🚀', isPrimary: true }
+        ];
+
       case 'app':
         return [
           { id: 'open', label: 'Open Application', shortcut: '↵', icon: '🚀', isPrimary: true },
@@ -63,6 +69,14 @@ export function useResultActions() {
       if (!result) return;
 
       try {
+        if (result.providerId === 'combo' || result.id.startsWith('combo:')) {
+          const combo = useComboStore.getState().combos.find((c) => c.id === result.id);
+          if (combo) {
+            await useComboStore.getState().launchCombo(combo);
+            return;
+          }
+        }
+
         if (actionId === 'copy_path' || actionId === 'copy_url') {
           const textToCopy = result.subtitle || result.id;
           if (navigator.clipboard) {

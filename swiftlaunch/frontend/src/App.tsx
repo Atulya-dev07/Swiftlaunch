@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { setupMockApi } from './mockApi.js';
 import { useUiStore } from './state/useUiStore.js';
 import { useSearchStore } from './state/useSearchStore.js';
+import { useComboStore } from './state/useComboStore.js';
 import { useLauncherSearch } from './hooks/useLauncherSearch.js';
 import { useKeyboardNavigation } from './hooks/useKeyboardNavigation.js';
 import { useLauncherVisibility } from './hooks/useLauncherVisibility.js';
 import { useContextResults } from './hooks/useContextResults.js';
 import { SearchBar } from './components/SearchBar.js';
+import { AppCombosBar } from './components/AppCombosBar.js';
+import { CreateComboModal } from './components/CreateComboModal.js';
 import { ResultsList } from './components/ResultsList.js';
 import { DetailPane } from './components/DetailPane.js';
 import { ActionPanel } from './components/ActionPanel.js';
@@ -26,6 +29,13 @@ export const App: React.FC = () => {
   const setProviderWarning = useSearchStore((state) => state.setProviderWarning);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [comboModalOpen, setComboModalOpen] = useState(false);
+  const loadCombos = useComboStore((state) => state.loadCombos);
+
+  // Initialize saved app combos
+  useEffect(() => {
+    loadCombos();
+  }, [loadCombos]);
 
   // Initialize search hook
   useLauncherSearch();
@@ -33,8 +43,8 @@ export const App: React.FC = () => {
   // Initialize visibility reset hook
   useLauncherVisibility();
 
-  // Initialize keyboard navigation hook
-  useKeyboardNavigation();
+  // Initialize keyboard navigation hook (disabled when modal is open to avoid key interception)
+  useKeyboardNavigation({ disabled: comboModalOpen || settingsOpen });
 
   // Initialize contextual search results listener
   useContextResults();
@@ -73,9 +83,17 @@ export const App: React.FC = () => {
   // Handle global Esc for Settings dialog and Ctrl+, shortcut
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && settingsOpen) {
-        e.preventDefault();
-        setSettingsOpen(false);
+      if (e.key === 'Escape') {
+        if (comboModalOpen) {
+          e.preventDefault();
+          setComboModalOpen(false);
+          return;
+        }
+        if (settingsOpen) {
+          e.preventDefault();
+          setSettingsOpen(false);
+          return;
+        }
       } else if (e.ctrlKey && e.key === ',') {
         e.preventDefault();
         setSettingsOpen((prev) => !prev);
@@ -83,16 +101,23 @@ export const App: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [settingsOpen]);
+  }, [settingsOpen, comboModalOpen]);
 
   const hasActiveResults = query.trim().length > 0 || flatResults.length > 0;
 
   return (
     <div
-      className={`launcher-window ${hasActiveResults ? 'has-results' : 'is-idle'}`}
+      className={`launcher-window ${hasActiveResults ? 'has-results' : 'is-idle'} ${comboModalOpen || settingsOpen ? 'is-modal-open' : ''}`}
       data-theme={theme}
     >
+      <div className="window-drag-bar" title="Click and drag to move launcher">
+        <div className="window-drag-indicator" />
+      </div>
+
       <SearchBar onOpenSettings={() => setSettingsOpen(true)} />
+
+      {/* Extended Search Bar Section: App Combos / Clubbed Apps Bar */}
+      <AppCombosBar onOpenCreate={() => setComboModalOpen(true)} />
 
       {providerWarning && (
         <div className="provider-warning-banner" role="alert">
@@ -121,6 +146,7 @@ export const App: React.FC = () => {
         </div>
       )}
 
+      {comboModalOpen && <CreateComboModal onClose={() => setComboModalOpen(false)} />}
       {settingsOpen && <SettingsPage onClose={() => setSettingsOpen(false)} />}
     </div>
   );

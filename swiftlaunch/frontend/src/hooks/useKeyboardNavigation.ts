@@ -3,6 +3,7 @@ import { useSearchStore } from '../state/useSearchStore.js';
 import { useResultActions } from './useResultActions.js';
 
 interface KeyboardNavigationOptions {
+  disabled?: boolean;
   onActionPanelIndexChange?: (delta: number) => void;
   actionPanelSelectedIndex?: number;
   onExecuteActionPanelItem?: () => void;
@@ -23,6 +24,10 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions = {}) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (options.disabled) {
+        return;
+      }
+
       // 1. Escape key logic
       if (e.key === 'Escape') {
         e.preventDefault();
