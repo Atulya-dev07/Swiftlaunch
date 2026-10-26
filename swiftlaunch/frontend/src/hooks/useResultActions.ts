@@ -40,17 +40,6 @@ export function useResultActions() {
           { id: 'show_in_folder', label: 'Show in Folder', shortcut: 'Ctrl+Shift+O', icon: '📁' }
         ];
 
-      case 'calc':
-        return [
-          { id: 'copy', label: 'Copy Result to Clipboard', shortcut: '↵', icon: '📋', isPrimary: true }
-        ];
-
-      case 'clip':
-        return [
-          { id: 'paste', label: 'Paste to Active Window', shortcut: '↵', icon: '📋', isPrimary: true },
-          { id: 'copy', label: 'Copy to Clipboard', shortcut: 'Ctrl+C', icon: '📄' }
-        ];
-
       case 'google':
         return [
           { id: 'search', label: 'Search in Browser', shortcut: '↵', icon: '🌐', isPrimary: true },

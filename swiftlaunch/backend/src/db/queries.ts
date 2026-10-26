@@ -6,8 +6,8 @@
  * Adapted to compute boost scores from usage_frequency data.
  */
 
-import type { PureJsDatabase, ItemEmbeddingRecord, ContextScanCacheRecord } from './schema.js';
-import type { ClipboardEntry, QuickLink } from '@swiftlaunch/shared';
+import type { PureJsDatabase } from './schema.js';
+import type { QuickLink } from '@swiftlaunch/shared';
 
 export class DbQueries {
   constructor(private db: PureJsDatabase) {}
@@ -52,39 +52,6 @@ export class DbQueries {
     }
 
     return scores;
-  }
-
-  // ── Clipboard history ────────────────────────────────────────────
-
-  /** Add a clipboard entry, deduplicating against the most recent entry. */
-  addClipboardEntry(content: string, type: 'text' | 'image' | 'html' = 'text'): void {
-    const data = this.db.Data;
-
-    // Check for duplicate of most recent entry
-    if (data.clipboard_history.length > 0) {
-      const last = data.clipboard_history[0];
-      if (last.content === content) return;
-    }
-
-    const entry: ClipboardEntry = {
-      id: data.clipboard_history.length + 1,
-      content,
-      type,
-      timestamp: Date.now()
-    };
-
-    data.clipboard_history.unshift(entry);
-
-    // Keep last 200 entries
-    if (data.clipboard_history.length > 200) {
-      data.clipboard_history = data.clipboard_history.slice(0, 200);
-    }
-    this.db.scheduleSave();
-  }
-
-  /** Get recent clipboard history entries. */
-  getClipboardHistory(limit: number = 50): ClipboardEntry[] {
-    return this.db.Data.clipboard_history.slice(0, limit);
   }
 
   // ── Quick links ──────────────────────────────────────────────────
@@ -132,82 +99,6 @@ export class DbQueries {
       this.db.Data.settings = {};
     }
     this.db.Data.settings[key] = value;
-    this.db.scheduleSave();
-  }
-
-  /** Check if context scan is enabled (defaults to true). */
-  isContextScanEnabled(): boolean {
-    return this.getSetting<boolean>('context_scan_enabled', true);
-  }
-
-  // ── Item Embeddings ──────────────────────────────────────────────
-
-  /** Get a cached embedding for an item by its ID. */
-  getItemEmbedding(itemId: string): ItemEmbeddingRecord | undefined {
-    const embeddings = this.db.Data.item_embeddings || [];
-    return embeddings.find((e) => e.item_id === itemId);
-  }
-
-  /** Get all cached item embeddings. */
-  getAllItemEmbeddings(): ItemEmbeddingRecord[] {
-    return [...(this.db.Data.item_embeddings || [])];
-  }
-
-  /** Insert or update an item embedding record. */
-  upsertItemEmbedding(record: ItemEmbeddingRecord): void {
-    if (!this.db.Data.item_embeddings) {
-      this.db.Data.item_embeddings = [];
-    }
-    const idx = this.db.Data.item_embeddings.findIndex((e) => e.item_id === record.item_id);
-    if (idx >= 0) {
-      this.db.Data.item_embeddings[idx] = record;
-    } else {
-      this.db.Data.item_embeddings.push(record);
-    }
-    this.db.scheduleSave();
-  }
-
-  /** Bulk upsert item embedding records. */
-  upsertItemEmbeddings(records: ItemEmbeddingRecord[]): void {
-    if (!this.db.Data.item_embeddings) {
-      this.db.Data.item_embeddings = [];
-    }
-    for (const record of records) {
-      const idx = this.db.Data.item_embeddings.findIndex((e) => e.item_id === record.item_id);
-      if (idx >= 0) {
-        this.db.Data.item_embeddings[idx] = record;
-      } else {
-        this.db.Data.item_embeddings.push(record);
-      }
-    }
-    this.db.scheduleSave();
-  }
-
-  // ── Context Scan Cache ───────────────────────────────────────────
-
-  /** Get the singleton last scan result. */
-  getContextScanCache(): ContextScanCacheRecord | undefined {
-    const cache = this.db.Data.context_scan_cache || [];
-    return cache.find((c) => c.id === 1);
-  }
-
-  /** Save the singleton last scan result. */
-  saveContextScanCache(ocrText: string, queryEmbedding: string): void {
-    const record: ContextScanCacheRecord = {
-      id: 1,
-      ocr_text: ocrText,
-      query_embedding: queryEmbedding,
-      scanned_at: Date.now()
-    };
-    if (!this.db.Data.context_scan_cache) {
-      this.db.Data.context_scan_cache = [];
-    }
-    const idx = this.db.Data.context_scan_cache.findIndex((c) => c.id === 1);
-    if (idx >= 0) {
-      this.db.Data.context_scan_cache[idx] = record;
-    } else {
-      this.db.Data.context_scan_cache.push(record);
-    }
     this.db.scheduleSave();
   }
 }

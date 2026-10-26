@@ -5,26 +5,24 @@
  * usage logging, and clipboard history channels.
  */
 
-import { ipcMain, clipboard, shell, BrowserWindow } from 'electron';
+import { ipcMain, shell, BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '@swiftlaunch/shared';
 import type { Result } from '@swiftlaunch/shared';
 import type { ProviderRegistry } from '../providers/ProviderRegistry.js';
 import type { AppProvider } from '../providers/AppProvider.js';
-import type { ClipboardProvider } from '../providers/ClipboardProvider.js';
 import type { DbQueries } from '../db/queries.js';
 import type { PluginLoader } from '../plugin-host/PluginLoader.js';
 import type { WindowSnapper, SnapDirection } from '../window-manager/WindowSnapper.js';
 
 interface HandlerDependencies {
   registry: ProviderRegistry;
-  clipboardProvider: ClipboardProvider;
   dbQueries: DbQueries;
   pluginLoader: PluginLoader;
   windowSnapper: WindowSnapper;
 }
 
 export function registerIpcHandlers(deps: HandlerDependencies): void {
-  const { registry, clipboardProvider, dbQueries, pluginLoader, windowSnapper } = deps;
+  const { registry, dbQueries, pluginLoader, windowSnapper } = deps;
 
   // Keep the ping channel for health checks
   ipcMain.handle(IPC_CHANNELS.PING, () => 'pong');
@@ -88,13 +86,6 @@ export function registerIpcHandlers(deps: HandlerDependencies): void {
       // Determine which provider owns the result
       const providerId = resultId.split(':')[0];
 
-      if (providerId === 'calc') {
-        // Copy calculation result to clipboard
-        const value = resultId.replace('calc:', '');
-        clipboard.writeText(value);
-        return;
-      }
-
       if (providerId === 'google') {
         // Open Google search URL
         const query = resultId.replace('google:', '');
@@ -125,12 +116,6 @@ export function registerIpcHandlers(deps: HandlerDependencies): void {
         return;
       }
 
-      // Clipboard paste
-      if (providerId === 'clip') {
-        await clipboardProvider.executeAction(resultId);
-        return;
-      }
-
       // App launch
       if (providerId === 'app') {
         const lnkPath = resultId.replace('app:', '');
@@ -145,11 +130,6 @@ export function registerIpcHandlers(deps: HandlerDependencies): void {
   // ── Log usage ───────────────────────────────────────────────────
   ipcMain.on(IPC_CHANNELS.LOG_USAGE, (_event, query: string, resultId: string) => {
     dbQueries.logUsage(query, resultId);
-  });
-
-  // ── Clipboard history ───────────────────────────────────────────
-  ipcMain.handle(IPC_CHANNELS.GET_CLIPBOARD_HISTORY, () => {
-    return clipboardProvider.getHistory();
   });
 
   // ── Window snapping ─────────────────────────────────────────────

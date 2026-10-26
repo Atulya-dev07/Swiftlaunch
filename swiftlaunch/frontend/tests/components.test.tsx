@@ -1,12 +1,13 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ResultItem } from '../src/components/ResultItem';
-import { SectionHeader } from '../src/components/SectionHeader';
+import { EmptyState } from '../src/components/EmptyState';
+import { useSearchStore } from '../src/state/useSearchStore';
 
 describe('React Component Render Tests', () => {
-  it('renders SectionHeader with title and count badge', () => {
-    render(<SectionHeader title="Applications" count={5} />);
-    expect(screen.getByText('Applications')).toBeInTheDocument();
-    expect(screen.getByText('5')).toBeInTheDocument();
+  it('renders EmptyState with query message when no results are found', () => {
+    useSearchStore.setState({ query: 'nonexistentapp123' });
+    render(<EmptyState />);
+    expect(screen.getByText('No results found for "nonexistentapp123"')).toBeInTheDocument();
   });
 
   it('renders ResultItem with title, subtitle, and badge', () => {

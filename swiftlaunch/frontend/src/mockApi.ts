@@ -1,4 +1,4 @@
-import type { Result, ClipboardEntry, InstalledApp } from '@swiftlaunch/shared';
+import type { Result, InstalledApp } from '@swiftlaunch/shared';
 
 const MOCK_RESULTS: Result[] = [
   {
@@ -72,62 +72,6 @@ const MOCK_RESULTS: Result[] = [
     title: 'swiftlaunch',
     subtitle: 'C:\\Users\\User\\Projects\\swiftlaunch',
     score: 68
-  },
-  {
-    id: 'clip:1',
-    providerId: 'clip',
-    icon: '📋',
-    title: 'pnpm --filter @swiftlaunch/frontend dev',
-    subtitle: 'Clipboard (text) • 5 mins ago',
-    score: 60
-  },
-  {
-    id: 'clip:2',
-    providerId: 'clip',
-    icon: '📋',
-    title: 'https://github.com/swiftlaunch/swiftlaunch',
-    subtitle: 'Clipboard (text) • 20 mins ago',
-    score: 55
-  }
-];
-
-const MOCK_CLIPBOARD_ENTRIES: ClipboardEntry[] = [
-  {
-    id: 1,
-    content: 'pnpm --filter @swiftlaunch/frontend dev',
-    type: 'text',
-    timestamp: Date.now() - 300000
-  },
-  {
-    id: 2,
-    content: 'https://github.com/swiftlaunch/swiftlaunch',
-    type: 'text',
-    timestamp: Date.now() - 1200000
-  },
-  {
-    id: 3,
-    content: 'const raycastStyle = { dense: true, keyboard: true };',
-    type: 'text',
-    timestamp: Date.now() - 3600000
-  }
-];
-
-const MOCK_CONTEXT_RESULTS: Result[] = [
-  {
-    id: 'app:c:/Users/User/AppData/Local/Programs/Microsoft VS Code/Code.exe',
-    providerId: 'context',
-    icon: '💻',
-    title: 'Visual Studio Code',
-    subtitle: 'Related to your screen · 94% match',
-    score: 98
-  },
-  {
-    id: 'file:c:/Users/User/Documents/Project-Architecture.pdf',
-    providerId: 'context',
-    icon: '📄',
-    title: 'Project-Architecture.pdf',
-    subtitle: 'Related to your screen · 88% match',
-    score: 92
   }
 ];
 
@@ -161,29 +105,6 @@ export function setupMockApi(): void {
       const q = query.trim().toLowerCase();
       if (!q) return [];
 
-      // Check math expression
-      if (/^[\d\s+\-*/%().^]+$/.test(q)) {
-        try {
-          // Safe math evaluation mock
-          const expr = q.replace(/[^0-9+\-*/%().]/g, '');
-          const val = Function(`"use strict"; return (${expr})`)();
-          if (typeof val === 'number' && !isNaN(val)) {
-            return [
-              {
-                id: `calc:${val}`,
-                providerId: 'calc',
-                icon: '🧮',
-                title: `= ${val}`,
-                subtitle: `Calculation: ${q}`,
-                score: 100
-              }
-            ];
-          }
-        } catch {
-          // ignore eval error
-        }
-      }
-
       // Filter mock results
       const filtered = MOCK_RESULTS.filter(
         (item) => item.title.toLowerCase().includes(q) || item.subtitle.toLowerCase().includes(q)
@@ -210,10 +131,6 @@ export function setupMockApi(): void {
       console.log(`[Mock API] logUsage query="${query}", resultId="${resultId}"`);
     },
 
-    getClipboardHistory: async (): Promise<ClipboardEntry[]> => {
-      return MOCK_CLIPBOARD_ENTRIES;
-    },
-
     snapWindow: async (direction: string): Promise<void> => {
       console.log(`[Mock API] snapWindow direction="${direction}"`);
     },
@@ -223,19 +140,6 @@ export function setupMockApi(): void {
       console.log('[Mock API] Registered onProviderWarning listener');
       return () => {
         console.log('[Mock API] Unsubscribed onProviderWarning listener');
-      };
-    },
-
-    onContextResultsUpdated: (callback: (results: Result[]) => void): (() => void) => {
-      console.log('[Mock API] Registered onContextResultsUpdated listener');
-      // Simulate delayed arrival of context results in standalone browser dev mode
-      const timer = setTimeout(() => {
-        callback(MOCK_CONTEXT_RESULTS);
-      }, 500);
-
-      return () => {
-        clearTimeout(timer);
-        console.log('[Mock API] Unsubscribed onContextResultsUpdated listener');
       };
     },
 

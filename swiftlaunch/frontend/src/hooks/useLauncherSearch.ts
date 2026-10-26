@@ -1,7 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useSearchStore } from '../state/useSearchStore.js';
 import { useComboStore } from '../state/useComboStore.js';
-import type { Result } from '@swiftlaunch/shared';
 
 export function useLauncherSearch(debounceMs = 150) {
   const query = useSearchStore((state) => state.query);
@@ -18,38 +17,10 @@ export function useLauncherSearch(debounceMs = 150) {
       const trimmed = searchQuery.trim();
 
       if (!trimmed) {
-        // If empty query, optionally populate clipboard entries or clear
-        setIsLoading(true);
-        try {
-          if (window.api && typeof window.api.getClipboardHistory === 'function') {
-            const history = await window.api.getClipboardHistory();
-            if (searchSeq.current === currentSeq) {
-              const clipboardResults: Result[] = history.map((entry) => ({
-                id: `clip:${entry.id || entry.timestamp}`,
-                providerId: 'clip',
-                icon: '📋',
-                title: entry.content.slice(0, 100).replace(/\n/g, ' '),
-                subtitle: `Clipboard (${entry.type}) • ${new Date(entry.timestamp).toLocaleTimeString()}`,
-                score: entry.timestamp
-              }));
-              setResults(clipboardResults);
-              setError(null);
-            }
-          } else {
-            if (searchSeq.current === currentSeq) {
-              setResults([]);
-              setError(null);
-            }
-          }
-        } catch (err: unknown) {
-          if (searchSeq.current === currentSeq) {
-            console.error('[useLauncherSearch] Empty query clipboard error:', err);
-            setResults([]);
-          }
-        } finally {
-          if (searchSeq.current === currentSeq) {
-            setIsLoading(false);
-          }
+        if (searchSeq.current === currentSeq) {
+          setResults([]);
+          setError(null);
+          setIsLoading(false);
         }
         return;
       }

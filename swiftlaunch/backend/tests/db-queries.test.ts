@@ -12,7 +12,6 @@ describe('Database & DbQueries', () => {
       const db = initDatabase(tmpDir);
       expect(db).toBeDefined();
       expect(Array.isArray(db.Data.usage_frequency)).toBe(true);
-      expect(Array.isArray(db.Data.clipboard_history)).toBe(true);
       expect(Array.isArray(db.Data.quicklinks)).toBe(true);
       closeDatabase();
     } finally {
@@ -26,32 +25,13 @@ describe('Database & DbQueries', () => {
       const db = initDatabase(tmpDir);
       const queries = new DbQueries(db);
 
-      queries.logUsage('calc', 'calc:2+2');
-      queries.logUsage('calc', 'calc:2+2');
-      queries.logUsage('calc', 'calc:3+3');
+      queries.logUsage('notepad', 'app:notepad');
+      queries.logUsage('notepad', 'app:notepad');
+      queries.logUsage('chrome', 'app:chrome');
 
-      const boosts = queries.getBoostScores(['calc:2+2', 'calc:3+3']);
-      expect(boosts.has('calc:2+2')).toBe(true);
-      expect(boosts.get('calc:2+2')!).toBeGreaterThan(boosts.get('calc:3+3')!);
-
-      closeDatabase();
-    } finally {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
-    }
-  });
-
-  it('clipboard history dedup', () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'swiftlaunch-test-'));
-    try {
-      const db = initDatabase(tmpDir);
-      const queries = new DbQueries(db);
-
-      queries.addClipboardEntry('hello', 'text');
-      queries.addClipboardEntry('hello', 'text'); // duplicate, should be ignored
-      queries.addClipboardEntry('world', 'text');
-
-      const history = queries.getClipboardHistory(10);
-      expect(history.length).toBe(2);
+      const boosts = queries.getBoostScores(['app:notepad', 'app:chrome']);
+      expect(boosts.has('app:notepad')).toBe(true);
+      expect(boosts.get('app:notepad')!).toBeGreaterThan(boosts.get('app:chrome')!);
 
       closeDatabase();
     } finally {

@@ -6,10 +6,7 @@ import { fileURLToPath } from 'url';
 // Providers
 import { ProviderRegistry } from './providers/ProviderRegistry.js';
 import { AppProvider } from './providers/AppProvider.js';
-import { CalculatorProvider } from './providers/CalculatorProvider.js';
 import { FileProvider } from './providers/FileProvider.js';
-import { ClipboardProvider } from './providers/ClipboardProvider.js';
-import { ContextProvider } from './providers/ContextProvider.js';
 
 // Database
 import { initDatabase, closeDatabase } from './db/schema.js';
@@ -91,15 +88,7 @@ app.whenReady().then(async () => {
   const registry = new ProviderRegistry();
 
   const appProvider = new AppProvider();
-  const calculatorProvider = new CalculatorProvider();
   const fileProvider = new FileProvider();
-  const clipboardProvider = new ClipboardProvider();
-  const contextProvider = new ContextProvider(dbQueries, appProvider, fileProvider);
-
-  // Wire clipboard persistence to DB
-  clipboardProvider.setDbCallback((entry) => {
-    dbQueries.addClipboardEntry(entry.content, entry.type);
-  });
 
   // Wire file provider warning callback
   fileProvider.setWarningCallback((msg) => {
@@ -108,18 +97,8 @@ app.whenReady().then(async () => {
     }
   });
 
-  // Wire context provider results callback
-  contextProvider.setUpdateCallback((results) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send(IPC_CHANNELS.CONTEXT_RESULTS_UPDATED, results);
-    }
-  });
-
   registry.register(appProvider);
-  registry.register(calculatorProvider);
   registry.register(fileProvider);
-  registry.register(clipboardProvider);
-  registry.register(contextProvider);
 
   // ── 3. Initialize Plugin Host & Window Snapper ───────────────────
   const pluginDir = path.join(app.getPath('userData'), 'plugins');
@@ -129,7 +108,6 @@ app.whenReady().then(async () => {
   // ── 4. Register IPC Handlers BEFORE loading BrowserWindow ────────
   registerIpcHandlers({
     registry,
-    clipboardProvider,
     dbQueries,
     pluginLoader,
     windowSnapper
@@ -148,16 +126,6 @@ app.whenReady().then(async () => {
     () => mainWindow,
     () => createWindow()
   );
-  hotkeyManager.setOnBeforeShow(async () => {
-    try {
-      const results = await contextProvider.refreshContext();
-      if (mainWindow && !mainWindow.isDestroyed() && results) {
-        mainWindow.webContents.send(IPC_CHANNELS.CONTEXT_RESULTS_UPDATED, results);
-      }
-    } catch (err) {
-      console.error('[Main] Context scan error on hotkey:', err);
-    }
-  });
   hotkeyManager.register();
 
   app.on('activate', () => {

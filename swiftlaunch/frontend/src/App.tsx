@@ -6,7 +6,6 @@ import { useComboStore } from './state/useComboStore.js';
 import { useLauncherSearch } from './hooks/useLauncherSearch.js';
 import { useKeyboardNavigation } from './hooks/useKeyboardNavigation.js';
 import { useLauncherVisibility } from './hooks/useLauncherVisibility.js';
-import { useContextResults } from './hooks/useContextResults.js';
 import { SearchBar } from './components/SearchBar.js';
 import { AppCombosBar } from './components/AppCombosBar.js';
 import { CreateComboModal } from './components/CreateComboModal.js';
@@ -45,9 +44,6 @@ export const App: React.FC = () => {
 
   // Initialize keyboard navigation hook (disabled when modal is open to avoid key interception)
   useKeyboardNavigation({ disabled: comboModalOpen || settingsOpen });
-
-  // Initialize contextual search results listener
-  useContextResults();
 
   useEffect(() => {
     // Diagnostic ping on mount

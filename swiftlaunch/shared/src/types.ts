@@ -34,13 +34,6 @@ export interface Settings {
   autostart: boolean;
 }
 
-export interface ClipboardEntry {
-  id?: number;
-  content: string;
-  type: 'text' | 'image' | 'html';
-  timestamp: number;
-}
-
 export interface QuickLink {
   id?: number;
   alias: string;
@@ -78,10 +71,8 @@ export interface SwiftLaunchApi {
   search: (query: string) => Promise<Result[]>;
   executeAction: (resultId: string, actionId?: string) => Promise<void>;
   logUsage: (query: string, resultId: string) => void;
-  getClipboardHistory: () => Promise<ClipboardEntry[]>;
   snapWindow: (direction: string) => Promise<void>;
   onProviderWarning: (callback: (message: string) => void) => () => void;
-  onContextResultsUpdated: (callback: (results: Result[]) => void) => () => void;
   getAllApps?: () => Promise<InstalledApp[]>;
   launchAppGroup?: (appIds: string[]) => Promise<void>;
 }

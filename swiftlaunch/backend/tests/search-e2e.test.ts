@@ -5,8 +5,6 @@ import os from 'os';
 import { ProviderRegistry } from '../src/providers/ProviderRegistry.js';
 import { FileProvider } from '../src/providers/FileProvider.js';
 import { AppProvider } from '../src/providers/AppProvider.js';
-import { CalculatorProvider } from '../src/providers/CalculatorProvider.js';
-import { ClipboardProvider } from '../src/providers/ClipboardProvider.js';
 
 describe('End-to-End Search Pipeline Trace', () => {
   let tempDir: string;
@@ -14,8 +12,6 @@ describe('End-to-End Search Pipeline Trace', () => {
   let registry: ProviderRegistry;
   let fileProvider: FileProvider;
   let appProvider: AppProvider;
-  let calcProvider: CalculatorProvider;
-  let clipProvider: ClipboardProvider;
 
   beforeEach(async () => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'swiftlaunch-e2e-'));
@@ -34,13 +30,9 @@ describe('End-to-End Search Pipeline Trace', () => {
     fileProvider = new FileProvider();
     fileProvider.setEsPath(null); // use fallback search for deterministic filesystem testing
     appProvider = new AppProvider();
-    calcProvider = new CalculatorProvider();
-    clipProvider = new ClipboardProvider();
 
     registry.register(fileProvider);
     registry.register(appProvider);
-    registry.register(calcProvider);
-    registry.register(clipProvider);
 
     await registry.initializeAll();
   });

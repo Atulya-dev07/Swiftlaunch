@@ -31,10 +31,6 @@ export const DetailPane: React.FC = () => {
         return 'apps';
       case 'file':
         return 'description';
-      case 'calc':
-        return 'calculate';
-      case 'clip':
-        return 'content_paste';
       case 'google':
         return 'travel_explore';
       case 'plugin':
@@ -51,10 +47,6 @@ export const DetailPane: React.FC = () => {
         return 'Application';
       case 'file':
         return ext ? `${ext} Document` : 'File Item';
-      case 'calc':
-        return 'Math Calculation';
-      case 'clip':
-        return 'Clipboard Entry';
       case 'google':
         return 'Web Query';
       case 'plugin':
@@ -79,49 +71,25 @@ export const DetailPane: React.FC = () => {
       <div className="detail-info-section">
         <div className="detail-info-header">Information</div>
 
-        {providerId === 'calc' && (
-          <div className="calc-big-display">
-            <span className="detail-grid-label">Computed Result</span>
-            <div className="calc-big-value">{selectedResult.title.replace(/^=\s*/, '')}</div>
-            <span className="detail-grid-label" style={{ marginTop: '8px' }}>Expression</span>
-            <div className="calc-expr">{selectedResult.subtitle.replace('Calculation: ', '')}</div>
-          </div>
-        )}
+        <div className="detail-grid">
+          <span className="detail-grid-label">Kind</span>
+          <span className="detail-grid-value">{getKindLabel(providerId, selectedResult.title)}</span>
 
-        {providerId === 'clip' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span className="detail-grid-label">Clipboard Content</span>
-            <div className="clipboard-big-box">{selectedResult.title}</div>
-            <div className="detail-grid" style={{ marginTop: '6px' }}>
-              <span className="detail-grid-label">Kind</span>
-              <span className="detail-grid-value">Text Snippet</span>
-              <span className="detail-grid-label">Meta</span>
-              <span className="detail-grid-value mono">{selectedResult.subtitle}</span>
-            </div>
-          </div>
-        )}
+          <span className="detail-grid-label">Target</span>
+          <span className="detail-grid-value mono" title={selectedResult.subtitle}>
+            {selectedResult.subtitle}
+          </span>
 
-        {providerId !== 'calc' && providerId !== 'clip' && (
-          <div className="detail-grid">
-            <span className="detail-grid-label">Kind</span>
-            <span className="detail-grid-value">{getKindLabel(providerId, selectedResult.title)}</span>
+          {selectedResult.score !== undefined && (
+            <>
+              <span className="detail-grid-label">Score</span>
+              <span className="detail-grid-value">{selectedResult.score}</span>
+            </>
+          )}
 
-            <span className="detail-grid-label">Target</span>
-            <span className="detail-grid-value mono" title={selectedResult.subtitle}>
-              {selectedResult.subtitle}
-            </span>
-
-            {selectedResult.score !== undefined && (
-              <>
-                <span className="detail-grid-label">Score</span>
-                <span className="detail-grid-value">{selectedResult.score}</span>
-              </>
-            )}
-
-            <span className="detail-grid-label">Provider</span>
-            <span className="detail-grid-value">{providerId.toUpperCase()}</span>
-          </div>
-        )}
+          <span className="detail-grid-label">Provider</span>
+          <span className="detail-grid-value">{providerId.toUpperCase()}</span>
+        </div>
       </div>
 
       {/* Primary Action Button */}

@@ -75,29 +75,6 @@ export const WebIcon: React.FC = () => (
   </svg>
 );
 
-export const CalcIcon: React.FC = () => (
-  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="28" height="28" rx="6" fill="#D97706" />
-    <rect x="7" y="6" width="14" height="4" rx="1" fill="#FEF3C7" />
-    <circle cx="9" cy="14" r="1.5" fill="#FFFFFF" />
-    <circle cx="14" cy="14" r="1.5" fill="#FFFFFF" />
-    <circle cx="19" cy="14" r="1.5" fill="#FFFFFF" />
-    <circle cx="9" cy="19" r="1.5" fill="#FFFFFF" />
-    <circle cx="14" cy="19" r="1.5" fill="#FFFFFF" />
-    <circle cx="19" cy="19" r="1.5" fill="#FFFFFF" />
-  </svg>
-);
-
-export const ClipIcon: React.FC = () => (
-  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="5" y="6" width="18" height="18" rx="3" fill="#6B7280" />
-    <rect x="9" y="3" width="10" height="4" rx="1.5" fill="#374151" />
-    <line x1="8" y1="12" x2="20" y2="12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
-    <line x1="8" y1="16" x2="17" y2="16" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
-    <line x1="8" y1="20" x2="14" y2="20" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
-
 export const AntigravityIcon: React.FC = () => (
   <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect width="28" height="28" rx="6" fill="#18132B" />
@@ -217,16 +194,6 @@ export const ResultIcon: React.FC<ResultIconProps> = ({ title, providerId, rawIc
   // Apps
   if (providerId === 'app') {
     return <AppDefaultIcon />;
-  }
-
-  // Calculator
-  if (providerId === 'calc') {
-    return <CalcIcon />;
-  }
-
-  // Clipboard
-  if (providerId === 'clip') {
-    return <ClipIcon />;
   }
 
   // Web

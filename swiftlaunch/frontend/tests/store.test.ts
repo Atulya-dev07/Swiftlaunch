@@ -7,8 +7,8 @@ describe('useSearchStore', () => {
     const mockResults: Result[] = [
       { id: 'app:c:/notepad.exe', providerId: 'app', icon: '📝', title: 'Notepad', subtitle: 'notepad' },
       { id: 'file:c:/docs/file.txt', providerId: 'file', icon: '📄', title: 'file.txt', subtitle: 'file' },
-      { id: 'calc:42', providerId: 'calc', icon: '🧮', title: '= 42', subtitle: 'Calculation' },
-      { id: 'clip:10', providerId: 'clip', icon: '📋', title: 'Copied text', subtitle: 'Clipboard' }
+      { id: 'combo:dev-stack', providerId: 'combo', icon: '🚀', title: 'Dev Stack', subtitle: 'App Combo' },
+      { id: 'google:search-term', providerId: 'google', icon: '🌐', title: 'Search Google', subtitle: 'Web Search' }
     ];
 
     const { grouped, flat } = groupResults(mockResults, null);
@@ -21,11 +21,11 @@ describe('useSearchStore', () => {
     expect(grouped['Files & Folders']).toBeDefined();
     expect(grouped['Files & Folders'].length).toBe(1);
 
-    expect(grouped['Calculator']).toBeDefined();
-    expect(grouped['Calculator'].length).toBe(1);
+    expect(grouped['App Combos']).toBeDefined();
+    expect(grouped['App Combos'].length).toBe(1);
 
-    expect(grouped['Clipboard History']).toBeDefined();
-    expect(grouped['Clipboard History'].length).toBe(1);
+    expect(grouped['Web Search']).toBeDefined();
+    expect(grouped['Web Search'].length).toBe(1);
   });
 
   it('groupResults respects activeGroup filter', () => {

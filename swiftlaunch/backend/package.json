@@ -13,10 +13,7 @@
   "dependencies": {
     "@swiftlaunch/shared": "workspace:*",
     "better-sqlite3": "^13.0.1",
-    "chokidar": "^5.0.0",
-    "compromise": "^14.14.4",
-    "mathjs": "^15.2.0",
-    "tesseract.js": "^6.0.0"
+    "chokidar": "^5.0.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",

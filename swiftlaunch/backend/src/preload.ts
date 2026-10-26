@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC_CHANNELS } from '@swiftlaunch/shared';
-import type { Result, ClipboardEntry } from '@swiftlaunch/shared';
+import type { Result } from '@swiftlaunch/shared';
 
 console.log('[Preload] SwiftLaunch API exposed');
 
@@ -22,10 +22,6 @@ contextBridge.exposeInMainWorld('api', {
   logUsage: (query: string, resultId: string): void =>
     ipcRenderer.send(IPC_CHANNELS.LOG_USAGE, query, resultId),
 
-  // Clipboard history
-  getClipboardHistory: (): Promise<ClipboardEntry[]> =>
-    ipcRenderer.invoke(IPC_CHANNELS.GET_CLIPBOARD_HISTORY),
-
   // Window snapping
   snapWindow: (direction: string): Promise<void> =>
     ipcRenderer.invoke(IPC_CHANNELS.SNAP_WINDOW, direction),
@@ -38,17 +34,6 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on(IPC_CHANNELS.PROVIDER_WARNING, listener);
     return () => {
       ipcRenderer.removeListener(IPC_CHANNELS.PROVIDER_WARNING, listener);
-    };
-  },
-
-  // Listen for contextual search results updates (returns unsubscribe function)
-  onContextResultsUpdated: (callback: (results: Result[]) => void): (() => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, results: Result[]) => {
-      callback(results);
-    };
-    ipcRenderer.on(IPC_CHANNELS.CONTEXT_RESULTS_UPDATED, listener);
-    return () => {
-      ipcRenderer.removeListener(IPC_CHANNELS.CONTEXT_RESULTS_UPDATED, listener);
     };
   },
 
