@@ -138,10 +138,10 @@ export function registerIpcHandlers(deps: HandlerDependencies): void {
   });
 
   // ── Get all installed apps ──────────────────────────────────────
-  ipcMain.handle(IPC_CHANNELS.GET_ALL_APPS, () => {
+  ipcMain.handle(IPC_CHANNELS.GET_ALL_APPS, async () => {
     const appProvider = registry.getProvider('AppProvider') as AppProvider | undefined;
     if (appProvider && typeof appProvider.getApplications === 'function') {
-      return appProvider.getApplications();
+      return await appProvider.getApplications();
     }
     return [];
   });

@@ -135,8 +135,26 @@ interface ResultIconProps {
 }
 
 export const ResultIcon: React.FC<ResultIconProps> = ({ title, providerId, rawIcon }) => {
-  if (rawIcon && (rawIcon.startsWith('data:') || rawIcon.startsWith('http://') || rawIcon.startsWith('https://'))) {
-    return <img src={rawIcon} alt="" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'contain' }} />;
+  const [imgError, setImgError] = React.useState(false);
+
+  React.useEffect(() => {
+    setImgError(false);
+  }, [rawIcon]);
+
+  if (rawIcon && !imgError && (rawIcon.startsWith('data:') || rawIcon.startsWith('http://') || rawIcon.startsWith('https://'))) {
+    return (
+      <img
+        src={rawIcon}
+        alt=""
+        onError={() => setImgError(true)}
+        style={{
+          width: '26px',
+          height: '26px',
+          borderRadius: '4px',
+          objectFit: 'contain'
+        }}
+      />
+    );
   }
 
   const t = title.toLowerCase();

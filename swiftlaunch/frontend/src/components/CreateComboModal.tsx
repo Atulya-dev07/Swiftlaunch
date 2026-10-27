@@ -259,7 +259,7 @@ export const CreateComboModal: React.FC<CreateComboModalProps> = ({ onClose }) =
                     </div>
 
                     <div className="combo-app-icon-wrap">
-                      <ResultIcon title={app.name} providerId="app" />
+                      <ResultIcon title={app.name} providerId="app" rawIcon={app.icon} />
                     </div>
 
                     <div className="combo-app-info">

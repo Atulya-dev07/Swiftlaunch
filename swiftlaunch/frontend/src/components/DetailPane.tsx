@@ -63,7 +63,22 @@ export const DetailPane: React.FC = () => {
       {/* Top Preview Card */}
       <div className="preview-card">
         <div className="preview-grid-pattern" />
-        <span className="material-symbols-outlined preview-card-icon">{iconName}</span>
+        {selectedResult.icon && (selectedResult.icon.startsWith('data:') || selectedResult.icon.startsWith('http')) ? (
+          <img
+            src={selectedResult.icon}
+            alt=""
+            style={{
+              width: '44px',
+              height: '44px',
+              objectFit: 'contain',
+              marginBottom: '6px',
+              zIndex: 1,
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+            }}
+          />
+        ) : (
+          <span className="material-symbols-outlined preview-card-icon">{iconName}</span>
+        )}
         <div className="preview-card-title">{selectedResult.title}</div>
       </div>
 
